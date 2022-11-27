@@ -1,6 +1,6 @@
 import unittest
 import random
-from avl_tree import BinaryTree
+from avl_tree import AVLTree
 from math import log2
 
 class Film:
@@ -45,7 +45,105 @@ class MyTestCase(unittest.TestCase):
                 'Valkyrie',
                 'American Made',
                 'Joker',
-                'Deadpool'
+                'Deadpool',
+                "Снайпер білий ворон",
+                "Avengers",
+                "Edge of tomorrow",
+                "Zoopolis",
+                "Some other movie"
+                "I don't care",
+                "I just need to test this",
+                "As extensivelyas I can",
+                "I have remembered one more movie",
+                "Chang Chi",
+                "Strange movie, right",
+                '123Avatar',
+                '123Top gun',
+                '123Illovaysk',
+                '123Inception',
+                '123Pacific rim',
+                '123Transformers',
+                '123Interstellar',
+                '123Oblivion',
+                '123Dune',
+                '123Zahar Berkut',
+                '123World War Z',
+                '123Fury',
+                '123Harry Potter and the Sorcerer\'s Stone',
+                '123The Angry Birds Movie',
+                '123Valkyrie',
+                '123American Made',
+                '123Joker',
+                '123Deadpool',
+                "123Снайпер білий ворон",
+                "123Avengers",
+                "123Edge of tomorrow",
+                "123Zoopolis",
+                "123Some other movie"
+                "123I don't care",
+                "123I just need to test this",
+                "123As extensivelyas I can",
+                "123I have remembered one more movie",
+                "123Chang Chi",
+                "123Strange movie, right"
+                '321Top gun',
+                '321Avatar',
+                '321Illovaysk',
+                '321Inception',
+                '321Pacific rim',
+                '321Transformers',
+                '321Interstellar',
+                '321Oblivion',
+                '321Dune',
+                '321Zahar Berkut',
+                '321World War Z',
+                '321Fury',
+                '321Harry Potter and the Sorcerer\'s Stone',
+                '321The Angry Birds Movie',
+                '321Valkyrie',
+                '321American Made',
+                '321Joker',
+                '321Deadpool',
+                "321Снайпер білий ворон",
+                "321Avengers",
+                "321Edge of tomorrow",
+                "321Zoopolis",
+                "321Some other movie"
+                "321I don't care",
+                "321I just need to test this",
+                "321As extensivelyas I can",
+                "321I have remembered one more movie",
+                "321Chang Chi",
+                "321Strange movie, right",
+                '321123Avatar',
+                '321123Top gun',
+                '321123Illovaysk',
+                '321123Inception',
+                '321123Pacific rim',
+                '321123Transformers',
+                '321123Interstellar',
+                '321123Oblivion',
+                '321123Dune',
+                '321123Zahar Berkut',
+                '321123World War Z',
+                '321123Fury',
+                '321123Harry Potter and the Sorcerer\'s Stone',
+                '321123The Angry Birds Movie',
+                '321123Valkyrie',
+                '321123American Made',
+                '321123Joker',
+                '321123Deadpool',
+                "321123Снайпер білий ворон",
+                "321123Avengers",
+                "321123Edge of tomorrow",
+                "321123Zoopolis",
+                "321123Some other movie"
+                "321123I don't care",
+                "321123I just need to test this",
+                "321123As extensivelyas I can",
+                "321123I have remembered one more movie",
+                "321123Chang Chi",
+                "321123Strange movie, right"
             ]
 
             random.shuffle(names)
@@ -60,7 +158,7 @@ class MyTestCase(unittest.TestCase):
                     'Hollywood'
                 ))
 
-            bin_tree = BinaryTree()
+            bin_tree = AVLTree()
             self.assertEqual(bin_tree.size(), 0)
 
             for film in test_list:
@@ -103,7 +201,7 @@ class MyTestCase(unittest.TestCase):
             for film in test_list:
                 self.assertEqual(bin_tree[film.name], film)
 
-            self.assertLessEqual(bin_tree.get_max_depth(),  int(log2(2 * bin_tree.size())))
+            self.assertLessEqual(bin_tree.get_max_depth(),  1.44*log2(bin_tree.size()+2)-0.328,  bin_tree.root.height)
 
             remove_test_list = list(test_list)
             while len(remove_test_list) > 0:

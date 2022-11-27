@@ -1,35 +1,33 @@
-import VisGraph from "react-graph-vis";
+import { useState } from "react";
+import CytoscapeComponent from "react-cytoscapejs";
 
 export default function Graph(props) {
 
-    let processed_nodes = []
-    if(!(props.nodes == null)) {
+    const [cy, setCy] =  useState()
+
+    let elements = []
+    if(props.nodes) {
         for(const node of props.nodes) {
-            processed_nodes.push({ id: node,  label: `Node ${node}`, title: `node ${node} tootip text`})
+            elements.push({data: { id: node,  label: `${node}`}})
         }
     }
-    
-    let processed_edges = []
-    if(!(props.edges == null)) {
+
+    if(props.edges) {
         for(const edge of props.edges) {
-            processed_edges.push({ from: edge[0], to: edge[1] })
+            elements.push({data:{ id: `${edge[0]}_${edge[1]}`, source: edge[0], target: edge[1] }})
         }
     }
+    console.log(cy);
 
-    const options = {
-        layout: {
-            randomSeed: 2,
-        },
-        edges: {
-            color: "#000000",
-        },
-        height: "500px",
-    };
+    let style = {
+        position: "absolute",
+        width: "100%",
+        height: "500px"
+    }
 
-    const graph = {
-        nodes: processed_nodes,
-        edges: processed_edges,
-    };
+    let layout = {
+        name: "cose"
+    }
 
-    return <VisGraph graph={graph} options={options}/>;
+    return <CytoscapeComponent elements={elements} style={style} layout={layout} cy={setCy}/>;
 }

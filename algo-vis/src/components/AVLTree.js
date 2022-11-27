@@ -1,38 +1,46 @@
-import Graph from "react-graph-vis";
+import { useEffect, useState} from "react";
+import cytoscape from "cytoscape";
+import CytoscapeComponent from "react-cytoscapejs";
+import dagre from 'cytoscape-dagre';
+
+cytoscape.use( dagre );
 
 export default function AVLTree(props) {
 
-    let processed_nodes = []
-    if(!(props.nodes == null)) {
+    const [cy, setCy] = useState()
+
+
+    let elements = []
+    if(props.nodes) {
+
         for(const node of props.nodes) {
-            processed_nodes.push({ id: node,  label: `Node ${node}`, title: `node ${node} tootip text`})
+            elements.push({data: { id: node,  label: `${node}`}, selected: props?.selected === node })
         }
     }
-    
-    let processed_edges = []
-    if(!(props.edges == null)) {
+
+    if(props.edges) {
         for(const edge of props.edges) {
-            processed_edges.push({ from: edge[0], to: edge[1] })
+            elements.push({data:{source: edge[0], target: edge[1] }})
         }
     }
 
-    const options = {
-        layout: {
-            hierarchical: {
-                direction: "UD",
-                sortMethod: "directed",
-            },
-        },
-        edges: {
-            color: "#000000",
-        },
-        height: "500px",
-    };
+    let style = {
+        position: "absolute",
+        width: "100%",
+        height: "500px"
+    }
 
-    const graph = {
-        nodes: processed_nodes,
-        edges: processed_edges,
-    };
+    let layout = {
+        name: "dagre",
+        animate: true    
+    }
 
-    return <Graph graph={graph} options={options}/>;
+    useEffect(() => {
+        let layoutObject = cy?.elements().makeLayout(layout);
+        layoutObject?.run()
+    }, [JSON.stringify(props)])
+    
+    cy?.nodes().ungrabify()
+
+    return <CytoscapeComponent elements={elements} style={style} layout={layout} cy={setCy}/>;
 }

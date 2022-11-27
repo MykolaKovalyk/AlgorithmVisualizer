@@ -1,10 +1,8 @@
 from __future__ import annotations
-from typing import Any, List, Tuple, Callable
-from action_logger import ActionLogger
-
+from typing import Any, List, Tuple, Callable, Dict
 NULL = None
 
-class BinaryTree:
+class AVLTree:
 
     class Node:
 
@@ -18,30 +16,6 @@ class BinaryTree:
             self.parent = None
 
             self.height = 1
-
-        def set_left(self, new_left_node: BinaryTree.Node) -> BinaryTree.Node:
-            old_node = self.left
-            if self.left is not NULL:
-                self.left.parent = NULL
-
-            self.left = new_left_node
-
-            if self.left is not NULL:
-                self.left.parent = self
-
-            return old_node
-
-        def set_right(self, new_right_node: BinaryTree.Node) -> BinaryTree.Node:
-            old_node = self.right
-            if self.right is not NULL:
-                self.right.parent = NULL
-
-            self.right = new_right_node
-
-            if self.right is not NULL:
-                self.right.parent = self
-
-            return old_node
 
         def is_right(self):
             if self.parent is NULL:
@@ -57,12 +31,12 @@ class BinaryTree:
         global NULL
 
         if NULL is None:
-            NULL = BinaryTree.Node(None)
+            NULL = AVLTree.Node(None)
             NULL.height = 0
 
         self.root = NULL
         self._size = 0
-        self._logger = ActionLogger()
+        self._logger = ActionLogger(self)
 
     def __getitem__(self, key):
 
@@ -130,39 +104,74 @@ class BinaryTree:
     def size(self) -> int:
         return self._size
 
-    def _to_list_of_nodes(self) -> List[BinaryTree.Node]:
+    def _to_list_of_nodes(self) -> List[AVLTree.Node]:
         result = []
 
-        def save_children(node: BinaryTree.Node):
-            if node.left is not NULL:
-                result.append(node.left)
-                save_children(node.left)
-            if node.right is not NULL:
-                result.append(node.right)
-                save_children(node.right)
-
-        if self.root is NULL:
-            return result
-
-        result.append(self.root)
-        save_children(self.root)
+        self._to_list_of_nodes_and_edges(result, None)
 
         return result
 
-    def _to_list_of_edges(self) -> List[BinaryTree.Node]:
-        pass
+    def _to_list_of_nodes_and_edges(self, result_nodes: List[Any], result_edges: List[Any]) -> Tuple[List[AVLTree.Node], List[Tuple[AVLTree.Node, AVLTree.Node]]]:
+        if self.root is NULL:
+            return [], []
+        
+        traversal_queue = [self.root]
 
-    def _find_node_by_key(self, key: Any) -> BinaryTree.Node:
+        while len(traversal_queue) > 0:
+            
+            current_node = traversal_queue.pop(0)
+            if result_nodes is not None:
+                result_nodes.append(current_node)
+            if result_edges is not None:
+                if current_node is not NULL and current_node is not None:
+                    if current_node.parent is not NULL:
+                        result_edges.append((current_node.parent, current_node))
+
+            if current_node.left is not NULL:
+                traversal_queue.append(current_node.left)
+            if current_node.right is not NULL:
+                traversal_queue.append(current_node.right)
+        
+        return result_nodes, result_edges
+
+    def to_json(self) -> Dict[str, List[Any]]:
+        nodes = []
+        edges = []
+        self._to_list_of_nodes_and_edges(nodes, edges)
+        nodes = [node.key for node in nodes] if nodes is not None else None
+        edges = [(parent.key, child.key) for parent, child in edges] if edges is not None else None
+
+        return_dict = {
+            "nodes": nodes,
+            "edges": edges
+        }
+
+        return return_dict
+
+
+    def _find_node_by_key(self, key: Any) -> AVLTree.Node:
 
         current_node = self.root
 
         while current_node is not NULL and key != current_node.key:
+            
+            # notify about search
+            self._logger.select_node(current_node.key, "yellow")
+
             right_node = hash(key) > hash(current_node.key)
             current_node = current_node.right if right_node else current_node.left
 
+        if current_node is not NULL:
+            # notify which node the search is finished at
+            self._logger.select_node(current_node.key, "green")
+        else:
+            # notify that node was not found
+            self._logger.error(f"Node with the key {key} was not found.")
+
+
         return current_node
 
-    def _add_or_find_node_by_key(self, key: Any, new_only: bool) -> BinaryTree.Node:
+    def _add_or_find_node_by_key(self, key: Any, new_only: bool) -> AVLTree.Node:
 
         current_node = self.root
         node_parent = NULL
@@ -171,22 +180,25 @@ class BinaryTree:
         while current_node is not NULL and key != current_node.key:
 
             # notify about search
-            self._logger.add({"action": "select", "node": current_node.key, "color": "yellow"})
+            self._logger.select_node(current_node.key, "yellow")
 
             node_parent = current_node
             right_node = hash(key) > hash(current_node.key)
             current_node = current_node.right if right_node else current_node.left
 
+        # notify which node the search is finished at
+        self._logger.select_node(current_node.key, "green")
+
         if current_node is not NULL:
 
             # notify that node with the specified key was found
-            self._logger.add({"action": "select", "node": current_node.key, "color": "red"})
+            self._logger.select_node(current_node.key, "green")
             
             if new_only:
                 error_message = f'Entry with the key "{key}" already exists.'
                 
                 # notify that node already exists, if the task was to create a new one
-                self._logger.add({"action": "error", "message": error_message})
+                self._logger.error(error_message)
                 
                 raise ValueError(error_message)
 
@@ -195,26 +207,38 @@ class BinaryTree:
 
             if self.root is NULL:
                 self.root = current_node
-            elif right_node:
-                node_parent.set_right(current_node)
             else:
-                node_parent.set_left(current_node)
+                if right_node:
+                    node_parent.right = current_node
+                else:
+                    node_parent.left = current_node
+                current_node.parent = node_parent
+
+            self._size += 1
 
             # new node was created, notify about it
-            self._logger.add({"action": "new_node", "edge": [node_parent.key,current_node.key]})
-            
-            self._size += 1
+            self._logger.new_edge([node_parent.key,current_node.key])
+         
+
             self._fixup(current_node)
 
         return current_node
 
     def _new_node(self, key):
-        new_node = BinaryTree.Node(key)
+        new_node = AVLTree.Node(key)
         new_node.left = new_node.right = new_node.parent = NULL
 
         return new_node
 
-    def _replace_node(self, node_to_replace: BinaryTree.Node) -> BinaryTree.Node:
+    def _remove_node(self, node_to_remove: AVLTree.Node) -> AVLTree.Node:
+        prune_node = self._replace_node(node_to_remove)
+        fixup_node = prune_node.parent
+
+        self._prune_leaf_node(prune_node)
+
+        self._fixup(fixup_node)
+
+    def _replace_node(self, node_to_replace: AVLTree.Node) -> AVLTree.Node:
 
         replacement = node_to_replace
 
@@ -223,38 +247,48 @@ class BinaryTree:
         elif node_to_replace.left is not NULL:
             replacement = self._find_the_biggest_node_in_the_branch(node_to_replace.left)
 
-        node_to_replace.key = replacement.key
-        node_to_replace.value = replacement.value
+        # log node replacement
+        self._logger.change_edges([
+                    [node_to_replace.key, node_to_replace.left.key],
+                    [node_to_replace.key, node_to_replace.right.key],
+                    [node_to_replace.parent.key, node_to_replace.key]
+            ])
+
+        node_to_replace.key, replacement.key = replacement.key, node_to_replace.key
+        node_to_replace.value, replacement.value = replacement.value, node_to_replace.value
 
         return replacement
 
-    def _prune_leaf_node(self, node_to_prune: BinaryTree.Node) -> None:
-        if node_to_prune.parent is NULL:
-            self._root = NULL
-        else:
-            replacement = node_to_prune.left if node_to_prune.left is not NULL else node_to_prune.right
-            if node_to_prune.is_right():
-                node_to_prune.parent.set_right(replacement)
-            else:
-                node_to_prune.parent.set_left(replacement)
+
+    def _prune_leaf_node(self, node_to_prune: AVLTree.Node) -> None:
         
+        replacement = node_to_prune.left if node_to_prune.left is not NULL else node_to_prune.right
+        if node_to_prune.parent is NULL:
+            self.root = replacement
+        else:
+            if node_to_prune.is_right():
+                node_to_prune.parent.right = replacement
+            else:
+                node_to_prune.parent.left = replacement
+            if replacement is not NULL:
+                replacement.parent = node_to_prune.parent
+
         self._size -= 1
 
-    def _remove_node(self, node_to_remove: BinaryTree.Node) -> BinaryTree.Node:
-        prune_node =  self._replace_node(node_to_remove)
-        fixup_node = prune_node.parent.parent
+        # log node replacement
+        self._logger.remove_node(node_to_prune.key)
 
-        self._prune_leaf_node(prune_node)
 
-        if fixup_node is not NULL and fixup_node is not None:
-            self._fixup(fixup_node)
 
     def get_max_depth(self):
         depth = 0
         for node in self._to_list_of_nodes():
+            if node.left != NULL and node.right != NULL:
+                continue
+
             current_depth = 1
             while node.parent is not NULL:
-                node =  node.parent
+                node = node.parent
                 current_depth += 1
             
             if current_depth > depth:
@@ -262,7 +296,24 @@ class BinaryTree:
 
         return depth
 
-    def _fixup(self, node: BinaryTree.Node): 
+    def get_min_depth(self):
+        depth = self.get_max_depth()
+        for node in self._to_list_of_nodes():
+            if node.left != NULL and node.right != NULL:
+                continue
+
+            current_depth = 1
+            while node.parent is not NULL:
+                node =  node.parent
+                current_depth += 1
+            
+            if current_depth < depth:
+                depth = current_depth
+
+        return depth
+
+
+    def _fixup(self, node: AVLTree.Node): 
         
         while node is not NULL:
             node.height = 1 + max(node.left.height, node.right.height)
@@ -270,19 +321,17 @@ class BinaryTree:
             balanceFactor = node.get_balance()
 
             if balanceFactor > 1:
-                if node.left.get_balance() >= 0:
-                    return self._right_rotate(node)
-                else:
-                    node.left = self._left_rotate(node.left)
-                    return self._right_rotate(node)
-            if balanceFactor < -1:
-                if node.right.get_balance() <= 0:
-                    return self._left_rotate(node)
-                else:
-                    node.right = self._right_rotate(node.right)
-                    return self._left_rotate(node)
-            
-            node = node.parent
+                if node.left.get_balance() < 0:
+                    self._left_rotate(node.left)
+                
+                node = self._right_rotate(node)
+            elif balanceFactor < -1:
+                if node.right.get_balance() > 0:
+                    self._right_rotate(node.right)
+                
+                node = self._left_rotate(node)
+            else:
+                node = node.parent
 
 
 
@@ -304,42 +353,37 @@ class BinaryTree:
         #   / \
         #  1   3
 
-        # log the rotation
-        self._logger.add(
-            {
-                "action": "rotate", 
-                "remove_edges": 
-                [
-                    [node.parent.key, node.key],
-                    [node.key, node.right.key],
-                    [node.right.key, node.right.left.key]
-                ],
-                "add_edges": [
-                    [node.parent.key, node.right.key],
-                    [node.right.key, node.key],
-                    [node.key, node.right.left.key]
-                ]
-            })
-
+        was_right = node.is_right()
 
         right_node = node.right
-        node.right = right_node.left
-        if right_node.left != NULL:
-            right_node.left.parent = node
+        right_left_node = node.right.left
+        parent_node = node.parent
 
-        right_node.parent = node.parent
-        if node.parent == NULL:
-            self.root = right_node
-        elif node == node.parent.left:
-            node.parent.left = right_node
-        else:
-            node.parent.right = right_node
         right_node.left = node
+        node.right = right_left_node
+        
+        if parent_node is not NULL:
+            if was_right:
+                parent_node.right = right_node
+            else:
+                parent_node.left =  right_node
+        else:
+            self.root = right_node
+
+        right_node.parent = parent_node
         node.parent = right_node
+        right_left_node.parent = node
 
         node.height = 1 + max(node.left.height, node.right.height)
         right_node.height = 1 + max(right_node.left.height, right_node.right.height)
 
+        # log the rotation
+        self._logger.change_edges([
+                    [right_node.parent.key, node.key],
+                    [node.key, right_node.key],
+                    [right_node.key, node.right.key]
+                ])
+        
         return right_node
 
     def _right_rotate(self, node):
@@ -361,56 +405,117 @@ class BinaryTree:
         #                 / \
         #                4   6
 
-        # log the rotation
-        self._logger.add(
-            {
-                "action": "rotate", 
-                "remove_edges": 
-                [
-                    [node.parent.key, node.key],
-                    [node.key, node.left.key],
-                    [node.left.key, node.left.right.key]
-                ],
-                "add_edges": [
-                    [node.parent.key, node.left.key],
-                    [node.left.key, node.key],
-                    [node.key, node.left.right.key]
-                ]
-            })
-
+        was_right = node.is_right()
 
         left_node = node.left
-        node.left = left_node.right
-        if left_node.right != NULL:
-            left_node.right.parent = node
+        left_right_node = node.left.right
+        parent_node = node.parent
 
-        left_node.parent = node.parent
-        if node.parent == NULL:
-            self.root = left_node
-        elif node == node.parent.right:
-            node.parent.right = left_node
-        else:
-            node.parent.left = left_node
         left_node.right = node
+        node.left = left_right_node
+        
+        if parent_node is not NULL:
+            if was_right:
+                parent_node.right = left_node
+            else:
+                parent_node.left =  left_node
+        else:
+            self.root = left_node
+
+        left_node.parent = parent_node
         node.parent = left_node
+        left_right_node.parent = node
 
         node.height = 1 + max(node.left.height, node.right.height)
         left_node.height = 1 + max(left_node.left.height, left_node.right.height)
 
+        # log the rotation
+        self._logger.change_edges([
+                    [left_node.parent.key, node.key],
+                    [node.key, left_node.key],
+                    [left_node.key, node.left.key]
+                ])
+
         return left_node
 
-    def _find_the_smallest_node_in_the_branch(self, node: BinaryTree.Node) -> BinaryTree.Node:
+    def _find_the_smallest_node_in_the_branch(self, node: AVLTree.Node) -> AVLTree.Node:
 
         current_node = node
         while current_node.left is not NULL:
+            self._logger.select_node(current_node.key, "yellow")
             current_node = current_node.left
+
+        self._logger.select_node(current_node.key, "green")
 
         return current_node
 
-    def _find_the_biggest_node_in_the_branch(self, node: BinaryTree.Node) -> BinaryTree.Node:
+    def _find_the_biggest_node_in_the_branch(self, node: AVLTree.Node) -> AVLTree.Node:
 
         current_node = node
         while current_node.right is not NULL:
+            self._logger.select_node(current_node.key, "yellow")
             current_node = current_node.right
+        
+        self._logger.select_node(current_node.key, "green")
 
         return current_node
+
+
+    def get_actions(self) -> List[Any]:
+        return self._logger.read_all()
+
+
+class ActionLogger:
+
+
+    def __init__(self, tree):
+        self.action_list = []
+        self.tree = tree
+
+    def add(self, action: Any):
+        self.action_list.append(action)
+
+    def final_tree(self):
+        self.add({"action": "final_tree", "tree": self.tree.to_json() })
+
+
+    def select_node(self, node_key, node_color):
+        self.add(
+            {
+                    "action": "select_node", 
+                    "key": node_key,
+                    "color": node_color
+            })
+    
+    def new_edge(self, node_edge):
+        self.add(
+            {
+                    "action": "new_edge", 
+                    "edge": node_edge,
+                    "tree": self.tree.to_json()
+            })
+    
+    def remove_node(self, node_key):
+        self.add(
+            {
+                    "action": "remove_node", 
+                    "edge": node_key,
+                    "tree": self.tree.to_json()
+            })
+
+    def change_edges(self, edges_to_change):
+        self.add(
+                {
+                    "action": "change_edges", 
+                    "to_change": edges_to_change,
+                    "tree": self.tree.to_json()
+                })
+
+    def error(self, error_message):
+        self.add({"action": "error", "message": error_message})
+
+    def read_all(self) -> List[Any]:
+        self.final_tree()
+        return_list = self.action_list
+        self.action_list = []
+        return return_list
