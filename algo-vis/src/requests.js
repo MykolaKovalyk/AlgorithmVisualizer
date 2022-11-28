@@ -3,21 +3,24 @@ import api from "./api";
 
 
 export const getTree = async (identifier) => 
-    (await api.get("/", { params: {identifier: identifier} })).data;
+    (await api.get("/avl", { params: {identifier: identifier} })).data;
 
 export const avlGetItem = async (identifier, id) => 
-    (await api.get(`/${id}`, { params: {identifier: identifier} })).data;
+    (await api.get(`/avl/${id}`, { params: {identifier: identifier} })).data;
 
 export const avlInsert = async (body) =>
-    (await api.post("/insert", body)).data
+    (await api.post("/avl/insert", body)).data
 
 
 export const avlClear = async (identifier) => { 
-    api.delete("/clear", {data: {identifier:identifier}})
+    api.delete("/avl/clear", {data: {identifier:identifier}})
 }
 
 export const avlRemove = async (body) => 
-    (await api.delete("/remove", {data: body})).data
+    (await api.delete("/avl/remove", {data: body})).data
+
+export const topsort = async (edgeList, startNode) =>
+    (await api.post("/topsort", {start: startNode, edges: edgeList}))
 
 
 

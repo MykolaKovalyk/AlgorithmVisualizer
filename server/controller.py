@@ -48,12 +48,19 @@ def insert():
     try:
         data = request.json
         indentification = data["identifier"]
+        key = data["key"]
+
+        if not isinstance(key, int):
+            raise Exception("Key should be of type int")
+        if key < 0:
+            raise Exception("Key value can't be less than 0")
+
 
         if indentification not in structures:
             structures[indentification] = AVLTree()
 
         avl_tree = structures[indentification]
-        avl_tree.append(data["key"], None)
+        avl_tree.append(key, None)
         
         return avl_tree.get_actions()
     except Exception as e:
