@@ -469,11 +469,11 @@ class ActionLogger:
 
 
     def __init__(self, tree):
-        self.action_list = []
+        self._action_list = []
         self.tree = tree
 
     def add(self, action: Any):
-        self.action_list.append(action)
+        self._action_list.append(action)
 
     def final_tree(self):
         self.add({"action": "final_tree", "tree": self.tree.to_json() })
@@ -499,7 +499,7 @@ class ActionLogger:
         self.add(
             {
                     "action": "remove_node", 
-                    "edge": node_key,
+                    "key": node_key,
                     "tree": self.tree.to_json()
             })
 
@@ -516,6 +516,6 @@ class ActionLogger:
 
     def read_all(self) -> List[Any]:
         self.final_tree()
-        return_list = self.action_list
-        self.action_list = []
+        return_list = self._action_list
+        self._action_list = []
         return return_list

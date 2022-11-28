@@ -37,7 +37,7 @@ function App() {
 
     for(let action of data) {
       if(action.key) {
-        setGraph({...graph, selected: action.key})
+        setGraph({...graph, selected: action.key, selectedColor: action.color})
         await delay(500)
       }
       if(action.action == "error") {
@@ -53,7 +53,7 @@ function App() {
 
     for(let action of data) {
       if(action.key) {
-        setGraph({...graph, selected: action.key})
+        setGraph({...graph, selected: action.key, selectedColor: action.color})
         await delay(500)
       }
       if(action.tree) {
@@ -71,7 +71,7 @@ function App() {
     
     for(let action of data) {
       if(action.key) {
-        setGraph({...graph, selected: action.key})
+        setGraph({...graph, selected: action.key, selectedColor: action.color})
         await delay(500)
       }
       if(action.tree) {
@@ -88,7 +88,8 @@ function App() {
     setGraph({
       nodes: [],
       edges: [],
-      selected: null
+      selected: null,
+      selectedColor: ""
     })
   }
 
@@ -117,11 +118,15 @@ function App() {
             <button onClick={clear}>clear</button>
             <input ref={input}/>
 
+            <div style={{height: "600px"}}>
             <AVLTree
               nodes={graph.nodes}
               edges={graph.edges}
               selected={graph.selected}
+              selectedColor={graph.selectedColor}
             />
+            </div>
+
           </>
         } />
       </Routes>

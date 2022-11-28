@@ -3,6 +3,7 @@ from main import app
 from flask import request, abort
 from time import sleep
 from avl_tree.avl_tree import AVLTree;
+from topsort.topsort import topsort
 import sys
 import traceback
 
@@ -87,6 +88,27 @@ def delete_item():
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
+
+@app.route('/topsort', methods=['POST'])
+def topsort():
+    try:
+        data = request.json
+
+        start = data["start"]
+        edges = data["edges"]
+        
+        output, logger = topsort(edges, start)
+
+        return logger.read_all()
+    except Exception as e:
+        print(traceback.format_exc())
+        abort(400, e)
+
+
+
+
+
+
 
 
 @app.route('/get-example', methods=['GET'])
