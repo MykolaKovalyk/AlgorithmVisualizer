@@ -1,25 +1,25 @@
 
 export default class Queue {
+    #elements = [];
     constructor() {
-        this.elements = [];
         this.head = 0;
         this.tail = 0;
     }
     enqueue(...elements) {
         for(let element of elements) {
-            this.elements[this.tail] = element;
+            this.#elements[this.tail] = element;
             this.tail++;
         }
     }
     dequeue() {
-        const item = this.elements[this.head];
-        delete this.elements[this.head];
+        const item = this.#elements[this.head];
+        delete this.#elements[this.head];
         this.head++;
         return item;
     }
 
     peek() {
-        return this.elements[this.head];
+        return this.#elements[this.head];
     }
 
     reset() {
@@ -28,7 +28,7 @@ export default class Queue {
     }
 
     set elements(value) {
-        this.elements = value
+        this.#elements = value
         this.reset()
     }
 

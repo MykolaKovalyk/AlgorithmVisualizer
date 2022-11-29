@@ -1,9 +1,9 @@
 import './App.css';
 import AVLTree from './components/AVLTree';
-import Graph from './components/Graph';
+import Graph, {generateGraph} from './components/Graph';
 import { Route, Routes, useLocation } from "react-router-dom"
 import Home from './components/Home';
-import { avlClear, avlGetItem, avlInsert, avlRemove, getTree } from './requests';
+import { avlClear, avlGetItem, avlInsert, avlRemove, getTree, topsort } from './requests';
 import { useEffect, useRef, useState } from 'react';
 
 const identifier = 15
@@ -16,19 +16,25 @@ function App() {
 
   const input = useRef()
   const addActions = useRef()
+  const addActionsGraph = useRef()
   const location = useLocation();
 
-  const [graph, setGraph] = useState({
-    nodes: [],
-    edges: []
-  })
+
+
+  const [graph, setGraph] = useState()
 
   useEffect(() => {
     async function tree() {
       let tree = await getTree(identifier)
-      addActions.current([{action: "set", tree:tree}])
+      addActions.current?.([{action: "set", tree:tree}])
     }
     tree()
+
+    let newGraph = generateGraph(20, 40)
+    setGraph(newGraph)
+
+    addActionsGraph.current?.([{action: "set", graph: newGraph}])
+
   }, [location.key])
 
 
@@ -42,7 +48,7 @@ function App() {
   async function testAppend() {
     let newNodes = []
 
-    for(let i = 0; i < 300;  i++) {
+    for(let i = 0; i < 50;  i++) {
       newNodes.push(i)
     }
 
@@ -50,6 +56,13 @@ function App() {
 
     for(let newNode of newNodes) {
       let data = await avlInsert({identifier: identifier, key: newNode})
+      addActions.current(data)
+    }
+
+    newNodes = newNodes.filter(() => Math.random() > 0.8)
+
+    for(let newNode of newNodes) {
+      let data = await avlRemove({identifier: identifier, key: newNode})
       addActions.current(data)
     }
   }
@@ -72,7 +85,12 @@ function App() {
 
   function clear() {
     avlClear(identifier)
-    setGraph(addActions.current([{action: "set", tree: {}}]))
+    addActions.current([{action: "set", tree: {}}])
+  }
+
+  async function startTopSort() {
+    let data = await topsort(graph.edges, 4)
+    addActionsGraph.current(data)
   }
 
   return (
@@ -82,15 +100,12 @@ function App() {
           <Home/>
         } />
         <Route path="/topological-sort" element={
-          <Graph
-            nodes={[1, 2, 3, 4, 5]}
-            edges={[
-              [2, 4],
-              [2, 5],
-              [1, 2],
-              [1, 3],
-            ]}
-          />
+          <div style={{height: "600px"}}>
+            <button onClick={startTopSort}>find</button>
+            <Graph
+            getAddActions={(addActionsCbck)=> { addActionsGraph.current = addActionsCbck} }
+            />
+          </div>
         } />
         <Route path="/avl-tree" element={
           <>

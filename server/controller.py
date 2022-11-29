@@ -97,7 +97,7 @@ def delete_item():
         abort(400, e)
 
 @app.route('/topsort', methods=['POST'])
-def topsort():
+def topological_sort():
     try:
         data = request.json
 

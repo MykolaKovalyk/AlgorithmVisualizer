@@ -1,6 +1,7 @@
+import Queue from "./Queue";
 
 export default class EventHandler {
-    #eventQueue = [];
+    #eventQueue = new Queue();
     #currentResolve = null;
     #closed = false;
 
@@ -14,7 +15,7 @@ export default class EventHandler {
             if(this.#eventQueue.length === 0) {
                 await this.#constructNewPromise()
             } else {
-                await this.handleEvent(this.#eventQueue.shift())
+                await this.handleEvent(this.#eventQueue.dequeue())
             }
         }
     }
@@ -22,7 +23,7 @@ export default class EventHandler {
     get closed() { return this.#closed }
 
     addEvents(actions) {
-        this.#eventQueue.push(...actions)
+        this.#eventQueue.enqueue(...actions)
         this.#currentResolve?.()
     }
 

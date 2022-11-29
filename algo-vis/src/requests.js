@@ -20,7 +20,7 @@ export const avlRemove = async (body) =>
     (await api.delete("/avl/remove", {data: body})).data
 
 export const topsort = async (edgeList, startNode) =>
-    (await api.post("/topsort", {start: startNode, edges: edgeList}))
+    (await api.post("/topsort", {start: startNode, edges: edgeList})).data
 
 
 

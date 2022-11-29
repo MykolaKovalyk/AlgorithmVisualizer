@@ -3,10 +3,11 @@ import useStateRef from "react-usestateref"
 import cytoscape from "cytoscape";
 import EventHandler from "./utilities/EventHandler";
 import CytoscapeComponent from "react-cytoscapejs";
-import cola from "cytoscape-cola"
+import dagre from "cytoscape-dagre"
 
-cytoscape.use(cola);
+cytoscape.use(dagre);
 
+const visualizationSpeed = 1
 
 export default function Graph(props) {
 
@@ -18,7 +19,7 @@ export default function Graph(props) {
 
     useEffect(() => {
         eventHandler.current = new EventHandler(async (action) => 
-            await actionHandler(() => graphRef.current, setGraph, action, () => cyRef.current))
+            await actionHandler({action:action, getCy: () => cyRef.current, setGraph: setGraph}))
 
         eventHandler.current.start()
         
@@ -36,7 +37,7 @@ export default function Graph(props) {
     }
 
     let layout = {
-        name: "cola",
+        name: "breadthfirst",
         animate: true
     }
 
@@ -50,30 +51,26 @@ export default function Graph(props) {
         {
             selector: 'edge',
             style: {
+                'curve-style': 'bezier',
+                'target-arrow-shape': 'triangle'
             }
         },
         {
-            selector: '.red',
+            selector: '.traversed',
             style: {
-                'background-color': "red",
+                'background-color': "yellow",
             }
         },
         {
-            selector: '.green',
-            style: {
-                'background-color': "green",
-            }
-        },
-        {
-            selector: '.orange',
+            selector: '.path',
             style: {
                 'background-color': "orange",
             }
         },
         {
-            selector: '.yellow',
+            selector: '.selected',
             style: {
-                'background-color': "yellow",
+                'background-color': "blue",
             }
         }]
 
@@ -87,63 +84,74 @@ export default function Graph(props) {
     return <CytoscapeComponent elements={graph} stylesheet={stylesheet} style={style} layout={layout} cy={setCy} />;
 }
 
+export function generateGraph(countOfNodes, countOfConnections) {
+    let nodes = []
+    for(let i = 0; i < countOfNodes;  i++) {
+        nodes.push(i)
+    }
+
+    function includesEdge(arrayOfEdges, edge) {
+        if(!edge) return false
+        
+        for(let edgeInArray of arrayOfEdges) {
+            if(edgeInArray[0] === edge[0] && edgeInArray[1] === edge[1]) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    let edges = []
+    for(let i = 0; i < countOfConnections; i++) {
+        let newEdge = null
+
+        do {
+            let node1Index = Math.floor(Math.random()*(nodes.length-1))
+            let node2Index = node1Index + 1 + Math.floor(Math.random()*(nodes.length-node1Index-1))
+            newEdge = [nodes[node1Index], nodes[node2Index]]
+        } while(includesEdge(edges, newEdge))
+
+        edges.push(newEdge)
+    }
+
+    return {nodes, edges}
+}
 
 
-async function actionHandler(getGraph, setGraph, action, getCy) {
+async function actionHandler({action, ...props} ) {
     let actionType =  action.action
 
-    let oldGraph = getGraph()
-    let newGraph = []
-    let cy = getCy()
+    console.log(action)
 
-    if(actionType === "select_node") {
-        console.log(action.color)
-        assignClassToNodes([action.key], [action.color], cy)
-        await delay(500)
+    let cy = props.getCy()
+    if(actionType === "step") {
+        let nodeClasses =  {
+            selected: action.selected,
+            path: action.path,
+            traversed: action.traversed
+        }
+
+        assignClassToNodes(nodeClasses, cy)
+        await delay(visualizationSpeed*500)
     }
 
-    if(actionType === "new_node") {
-        newGraph = usualNodesOutOfTree(action.tree, cy)
-        setGraph(newGraph)
-        await delay(1000)
+    if(actionType === "set") {
+        props.setGraph(convertToCyFormat(action.graph, cy))
     }
 
-    if(actionType === "remove_node") {
-        newGraph = usualNodesOutOfTree(action.tree, cy)
-        setGraph(newGraph)
-        await delay(1000)
+    if(actionType === "final_array") {
+        clearAllClasses(cy)
     }
 
-    if(actionType === "rotate_node") {
-        assignClassToNodes([action.key], "orange", cy)
-        await delay(500)
-        
-        newGraph = usualNodesOutOfTree(action.tree, cy)
-        setGraph(newGraph)
-        await delay(1000)
-    }
-
-    if(actionType === "rotate_node") {
-        assignClassToNodes([action.to_replace, action.replacement], "blue", cy)
-        await delay(500)
-        
-
-        newGraph = usualNodesOutOfTree(action.tree, cy)
-        setGraph(newGraph)
-        await delay(1000)
-    }
-
-    if(actionType === "final_tree") {
-        newGraph = usualNodesOutOfTree(action.tree, cy)
-        setGraph(newGraph)
-        await delay(1000)
-        assignClassToNodes([13], "green", cy)
+    if(actionType === "error") {
+        console.log(action.message)
     }
 }
 
-function usualNodesOutOfTree(tree, cy) {
+function convertToCyFormat(graph, cy) {
 
-    if (!tree) {
+    if (!graph) {
         return {}
     }
 
@@ -153,14 +161,14 @@ function usualNodesOutOfTree(tree, cy) {
 
     let elements = []
     
-    if(tree.nodes) {
-        for (const node of tree.nodes) {
+    if(graph.nodes) {
+        for (const node of graph.nodes) {
             elements.push({ data: { id: node, label: `${node}` }, classes: null})
         }
     }
 
-    if (tree.edges) {
-        for (const edge of tree.edges) {
+    if (graph.edges) {
+        for (const edge of graph.edges) {
             elements.push({ data: { source: edge[0], target: edge[1] } })
         }
     }
@@ -168,15 +176,29 @@ function usualNodesOutOfTree(tree, cy) {
     return elements;
 }
 
-function assignClassToNodes(nodesWithClass, classes, cy) {
+function assignClassToNodes(nodeClasses, cy) {
+    clearAllClasses(cy)
+    
+    let selected = cy.getElementById(nodeClasses.selected)
+    selected.removeClass("path")
+    selected.addClass("selected")
+    for (let pathNode of nodeClasses.path) {
+        if(pathNode !== parseInt(selected.id())) {
+            let cyNode = cy.getElementById(pathNode)
+            cyNode.addClass("path")
+        }
+    }
 
-    let elements = []
+    for (let pathNode of nodeClasses.traversed) {
+        let cyNode = cy.getElementById(pathNode)
+        cyNode.removeClass(cyNode.classes())
+        cyNode.addClass("traversed")
+    }
+}
+
+function clearAllClasses(cy) {
     for (const node of cy.elements()) {
         node.removeClass(node.classes())
-        if(nodesWithClass.includes(parseInt(node.id()))) {
-            node.addClass(classes)
-        }
-        elements.push(node)
     }
 }
 

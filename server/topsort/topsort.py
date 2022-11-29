@@ -8,10 +8,13 @@ class ActionLogger:
         self._action_list.append(action)
 
     def new_step(self, selected_node, traversal_path, traversed):
-        self.add({"action": "step",  "selected": selected_node, "path": traversal_path, "traversed": traversed})
+        self.add({"action": "step",  "selected": selected_node, "path": list(traversal_path), "traversed": list(traversed)})
 
     def final_array(self, final_array):
         self.add({"action": "final_array",  "array": final_array})
+    
+    def error(self, error_message):
+        self.add({"action": "error", "message": error_message})
 
 
     def read_all(self) -> List[Any]:
@@ -39,18 +42,20 @@ def topsort(edges, start):
 
     for node in nodes:
         if node not in traversed_nodes:
-            backtracked_way = []
             visited = []
             traverse_stack = [node]
 
             while len(traverse_stack) > 0:
                 current_node = traverse_stack[-1]
-
                 logger.new_step(current_node, traverse_stack, traversed_nodes)
+
 
                 found_unvisited = False
                 for edge in edges:
                     if edge[0] == current_node:
+                        if edge[1] in traverse_stack:
+                            logger.error(f"Graph is not acyclic. Cycle {traverse_stack} was found")
+                            return None, logger
                         if edge[1] not in traversed_nodes and edge[1] not in visited:
                             traverse_stack.append(edge[1])
                             found_unvisited = True
@@ -62,7 +67,7 @@ def topsort(edges, start):
                 
                 visited.append(current_node)
     
-
+    logger.new_step(None, [], traversed_nodes)
     logger.final_array(traversed_nodes)
 
     return traversed_nodes, logger

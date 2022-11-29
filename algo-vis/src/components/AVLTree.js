@@ -8,7 +8,7 @@ import dagre from 'cytoscape-dagre';
 cytoscape.use(dagre);
 
 
-const visualizationSpeed = 0.0
+const visualizationSpeed = 0.25
 
 
 export default function AVLTree(props) {
@@ -21,7 +21,11 @@ export default function AVLTree(props) {
 
     useEffect(() => {
         eventHandler.current = new EventHandler(async (action) => 
-            await actionHandler(() => cyRef.current, setGraph, action))
+            await actionHandler({
+                getCy: () => cyRef.current, 
+                setGraph, 
+                action
+            }))
 
         eventHandler.current.start()
         
@@ -93,14 +97,10 @@ export default function AVLTree(props) {
 
 
 
-async function actionHandler(getCy, setGraph, action) {
+async function actionHandler({getCy, setGraph, action, ...props}) {
     let actionType =  action.action
 
-    let newGraph = []
     let cy = getCy()
-
-
-    console.log(action)
 
     if(actionType === "select_node") {
         assignClassToNodes([action.key], [action.color], cy)
@@ -120,7 +120,7 @@ async function actionHandler(getCy, setGraph, action) {
         await delay(visualizationSpeed*500)
         
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*1000)
+        await delay(visualizationSpeed*500)
     }
 
     if(actionType === "replace_node") {
@@ -128,7 +128,7 @@ async function actionHandler(getCy, setGraph, action) {
         await delay(visualizationSpeed*500)
 
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*1000)
+        await delay(visualizationSpeed*500)
     }
 
     if(actionType === "rotate_node") {
@@ -136,7 +136,7 @@ async function actionHandler(getCy, setGraph, action) {
         await delay(visualizationSpeed*500)
         
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*1000)
+        await delay(visualizationSpeed*500)
     }
 
     if(actionType === "final_tree") {
