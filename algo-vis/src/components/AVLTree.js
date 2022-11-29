@@ -1,28 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import useStateRef from "react-usestateref"
 import cytoscape from "cytoscape";
+import EventHandler from "./utilities/EventHandler";
 import CytoscapeComponent from "react-cytoscapejs";
 import dagre from 'cytoscape-dagre';
 
 cytoscape.use(dagre);
 
+
+const visualizationSpeed = 0.0
+
+
 export default function AVLTree(props) {
 
-    const [cy, setCy] = useState()
+    const [graph, setGraph] = useState()
 
 
-    let elements = []
-    if (props.nodes) {
+    const [cy, setCy, cyRef] = useStateRef()
+    const eventHandler = useRef()
 
-        for (const node of props.nodes) {
-            elements.push({ data: { id: node, label: `${node}` } })
-        }
-    }
+    useEffect(() => {
+        eventHandler.current = new EventHandler(async (action) => 
+            await actionHandler(() => cyRef.current, setGraph, action))
 
-    if (props.edges) {
-        for (const edge of props.edges) {
-            elements.push({ data: { source: edge[0], target: edge[1] } })
-        }
-    }
+        eventHandler.current.start()
+        
+        props.getAddActions?.(
+            eventHandler.current.addEvents.bind(eventHandler.current))
+
+        return () => eventHandler.current.stop()
+    }, [])
+
+
 
     let style = {
         width: "100%",
@@ -31,7 +40,8 @@ export default function AVLTree(props) {
 
     let layout = {
         name: "dagre",
-        animate: true
+        animate: true,
+        animationDuration: visualizationSpeed * 750
     }
 
     let stylesheet = [
@@ -47,28 +57,146 @@ export default function AVLTree(props) {
             }
         },
         {
-            selector: '.selection',
+            selector: '.red',
             style: {
-                'background-color': props.selectedColor,
+                'background-color': "red",
+            }
+        },
+        {
+            selector: '.green',
+            style: {
+                'background-color': "green",
+            }
+        },
+        {
+            selector: '.orange',
+            style: {
+                'background-color': "orange",
+            }
+        },
+        {
+            selector: '.yellow',
+            style: {
+                'background-color': "yellow",
             }
         }]
 
     useEffect(() => {
         let layoutObject = cy?.elements().makeLayout(layout);
         layoutObject?.run()
-    }, [JSON.stringify(props)])
+    }, [JSON.stringify(graph)])
 
     cy?.nodes().ungrabify()
 
-    if (cy) {
-        for(let element of cy.elements()) {
-            if(element.id() == props.selected) {
-                element.addClass("selection")
-            } else {
-                element.removeClass("selection")
-            }
+    return <CytoscapeComponent elements={graph} stylesheet={stylesheet} style={style} layout={layout} cy={setCy} />;
+}
+
+
+
+async function actionHandler(getCy, setGraph, action) {
+    let actionType =  action.action
+
+    let newGraph = []
+    let cy = getCy()
+
+
+    console.log(action)
+
+    if(actionType === "select_node") {
+        assignClassToNodes([action.key], [action.color], cy)
+        await delay(visualizationSpeed*500)
+    }
+
+    if(actionType === "new_node") {
+        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+        await delay(visualizationSpeed*500)
+
+        assignClassToNodes([action.key], ["green"], cy)
+        await delay(visualizationSpeed*500)
+    }
+
+    if(actionType === "remove_node") {
+        assignClassToNodes([action.key], ["red"], cy)
+        await delay(visualizationSpeed*500)
+        
+        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+        await delay(visualizationSpeed*1000)
+    }
+
+    if(actionType === "replace_node") {
+        assignClassToNodes([action.replacement, action.to_replace], ["orange"], cy)
+        await delay(visualizationSpeed*500)
+
+        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+        await delay(visualizationSpeed*1000)
+    }
+
+    if(actionType === "rotate_node") {
+        assignClassToNodes([action.key], ["orange"], cy)
+        await delay(visualizationSpeed*500)
+        
+        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+        await delay(visualizationSpeed*1000)
+    }
+
+    if(actionType === "final_tree") {
+        clearAllClasses(cy)
+        await delay(visualizationSpeed*500)
+    }
+
+    if(actionType === "set") {
+        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+    }
+}
+
+function convertTreeToCytoscapeElements(tree, cy) {
+
+    if (!tree) {
+        return {}
+    }
+
+    
+
+    for (const node of cy.elements()) {
+        node.removeClass(node.classes())
+    }
+
+    let elements = []
+    
+    if(tree.nodes) {
+        for (const node of tree.nodes) {
+            elements.push({ data: { id: node, label: `${node}` }, classes: null})
         }
     }
 
-    return <CytoscapeComponent elements={elements} stylesheet={stylesheet} style={style} layout={layout} cy={setCy} />;
+    if (tree.edges) {
+        for (const edge of tree.edges) {
+            elements.push({ data: { source: edge[0], target: edge[1] } })
+        }
+    }
+
+    return elements;
+}
+
+function assignClassToNodes(nodesWithClass, classes, cy) {
+
+    let elements = []
+    for (const node of cy.elements()) {
+        node.removeClass(node.classes())
+        if(nodesWithClass.includes(parseInt(node.id()))) {
+            node.addClass(classes)
+        }
+        elements.push(node)
+    }
+}
+
+function clearAllClasses(cy) {
+    for (const node of cy.elements()) {
+        node.removeClass(node.classes())
+    }
+}
+
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }

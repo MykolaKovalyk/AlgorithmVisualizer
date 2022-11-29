@@ -186,8 +186,6 @@ class AVLTree:
             right_node = hash(key) > hash(current_node.key)
             current_node = current_node.right if right_node else current_node.left
 
-        # notify which node the search is finished at
-        self._logger.select_node(current_node.key, "green")
 
         if current_node is not NULL:
 
@@ -217,8 +215,7 @@ class AVLTree:
             self._size += 1
 
             # new node was created, notify about it
-            self._logger.new_edge([node_parent.key,current_node.key])
-         
+            self._logger.new_node(current_node.key)
 
             self._fixup(current_node)
 
@@ -248,11 +245,7 @@ class AVLTree:
             replacement = self._find_the_biggest_node_in_the_branch(node_to_replace.left)
 
         # log node replacement
-        self._logger.change_edges([
-                    [node_to_replace.key, node_to_replace.left.key],
-                    [node_to_replace.key, node_to_replace.right.key],
-                    [node_to_replace.parent.key, node_to_replace.key]
-            ])
+        self._logger.replace_node(node_to_replace.key, replacement.key)
 
         node_to_replace.key, replacement.key = replacement.key, node_to_replace.key
         node_to_replace.value, replacement.value = replacement.value, node_to_replace.value
@@ -378,11 +371,7 @@ class AVLTree:
         right_node.height = 1 + max(right_node.left.height, right_node.right.height)
 
         # log the rotation
-        self._logger.change_edges([
-                    [right_node.parent.key, node.key],
-                    [node.key, right_node.key],
-                    [right_node.key, node.right.key]
-                ])
+        self._logger.rotate_node(node.key)
         
         return right_node
 
@@ -430,11 +419,7 @@ class AVLTree:
         left_node.height = 1 + max(left_node.left.height, left_node.right.height)
 
         # log the rotation
-        self._logger.change_edges([
-                    [left_node.parent.key, node.key],
-                    [node.key, left_node.key],
-                    [left_node.key, node.left.key]
-                ])
+        self._logger.rotate_node(node.key)
 
         return left_node
 
@@ -487,11 +472,11 @@ class ActionLogger:
                     "color": node_color
             })
     
-    def new_edge(self, node_edge):
+    def new_node(self, new_node):
         self.add(
             {
-                    "action": "new_edge", 
-                    "edge": node_edge,
+                    "action": "new_node", 
+                    "key": new_node,
                     "tree": self.tree.to_json()
             })
     
@@ -503,11 +488,20 @@ class ActionLogger:
                     "tree": self.tree.to_json()
             })
 
-    def change_edges(self, edges_to_change):
+    def rotate_node(self, node_to_rotate):
         self.add(
                 {
-                    "action": "change_edges", 
-                    "to_change": edges_to_change,
+                    "action": "rotate_node", 
+                    "key": node_to_rotate,
+                    "tree": self.tree.to_json()
+                })
+    
+    def replace_node(self, to_replace, replacement):
+        self.add(
+                {
+                    "action": "replace_node", 
+                    "to_replace": to_replace,
+                    "replacement": replacement,
                     "tree": self.tree.to_json()
                 })
 

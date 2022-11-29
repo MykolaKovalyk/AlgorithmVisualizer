@@ -1,7 +1,7 @@
 import './App.css';
 import AVLTree from './components/AVLTree';
 import Graph from './components/Graph';
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes, useLocation } from "react-router-dom"
 import Home from './components/Home';
 import { avlClear, avlGetItem, avlInsert, avlRemove, getTree } from './requests';
 import { useEffect, useRef, useState } from 'react';
@@ -15,7 +15,8 @@ function delay(ms) {
 function App() {
 
   const input = useRef()
-
+  const addActions = useRef()
+  const location = useLocation();
 
   const [graph, setGraph] = useState({
     nodes: [],
@@ -25,72 +26,53 @@ function App() {
   useEffect(() => {
     async function tree() {
       let tree = await getTree(identifier)
-      setGraph(tree)
+      addActions.current([{action: "set", tree:tree}])
     }
     tree()
-  }, [])
+  }, [location.key])
 
 
   async function find() {
     let input_value = parseInt(input.current.value)
     let data = await avlGetItem(identifier, input_value)
 
-    for(let action of data) {
-      if(action.key) {
-        setGraph({...graph, selected: action.key, selectedColor: action.color})
-        await delay(500)
-      }
-      if(action.action == "error") {
-        setGraph({...graph, selected: null})
-      }
-    }
+    addActions.current(data)
   }
   
+  async function testAppend() {
+    let newNodes = []
+
+    for(let i = 0; i < 300;  i++) {
+      newNodes.push(i)
+    }
+
+    newNodes.sort(() => Math.random() - 0.5)
+
+    for(let newNode of newNodes) {
+      let data = await avlInsert({identifier: identifier, key: newNode})
+      addActions.current(data)
+    }
+  }
 
   async function append() {
     let input_value = parseInt(input.current.value)
     let data = await avlInsert({identifier: identifier, key: input_value})
 
-    for(let action of data) {
-      if(action.key) {
-        setGraph({...graph, selected: action.key, selectedColor: action.color})
-        await delay(500)
-      }
-      if(action.tree) {
-        setGraph(action.tree)
-        await delay(1000)
-      }
-    }
     
-    setGraph(data[data.length - 1].tree)
+    addActions.current(data)
   }
 
   async function remove() {
     let input_value = parseInt(input.current.value)
     let data = await avlRemove({identifier: identifier, key: input_value})
-    
-    for(let action of data) {
-      if(action.key) {
-        setGraph({...graph, selected: action.key, selectedColor: action.color})
-        await delay(500)
-      }
-      if(action.tree) {
-        setGraph(action.tree)
-        await delay(1000)
-      }
-    }
 
-    setGraph(data[data.length - 1].tree)
+    addActions.current(data)
+
   }
 
   function clear() {
     avlClear(identifier)
-    setGraph({
-      nodes: [],
-      edges: [],
-      selected: null,
-      selectedColor: ""
-    })
+    setGraph(addActions.current([{action: "set", tree: {}}]))
   }
 
   return (
@@ -116,14 +98,13 @@ function App() {
             <button onClick={append}>insert</button>
             <button onClick={remove}>remove</button>
             <button onClick={clear}>clear</button>
+            <button onClick={testAppend}>test</button>
+            
             <input ref={input}/>
 
             <div style={{height: "600px"}}>
             <AVLTree
-              nodes={graph.nodes}
-              edges={graph.edges}
-              selected={graph.selected}
-              selectedColor={graph.selectedColor}
+              getAddActions={(addActionsCbck)=> { addActions.current = addActionsCbck} }
             />
             </div>
 
