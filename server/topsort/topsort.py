@@ -7,8 +7,8 @@ class ActionLogger:
     def add(self, action: Any):
         self._action_list.append(action)
 
-    def new_step(self, selected_node, traversal_path, traversed):
-        self.add({"action": "step",  "selected": selected_node, "path": list(traversal_path), "traversed": list(traversed)})
+    def new_step(self, selected_node, selected_edge, traversal_path, traversed):
+        self.add({"action": "step",  "selected": selected_node, "selected_edge": selected_edge, "path": list(traversal_path), "traversed": list(traversed)})
 
     def final_array(self, final_array):
         self.add({"action": "final_array",  "array": final_array})
@@ -45,9 +45,12 @@ def topsort(edges, start):
             visited = []
             traverse_stack = [node]
 
+            current_node = None
             while len(traverse_stack) > 0:
+                parent_node = current_node
                 current_node = traverse_stack[-1]
-                logger.new_step(current_node, traverse_stack, traversed_nodes)
+                logger.new_step(current_node,[parent_node, current_node], traverse_stack, traversed_nodes)
+
 
 
                 found_unvisited = False
@@ -67,7 +70,7 @@ def topsort(edges, start):
                 
                 visited.append(current_node)
     
-    logger.new_step(None, [], traversed_nodes)
+    logger.new_step(None, [], [], traversed_nodes)
     logger.final_array(traversed_nodes)
 
     return traversed_nodes, logger

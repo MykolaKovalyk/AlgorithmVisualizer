@@ -16,7 +16,7 @@ function App() {
 
   const input = useRef()
   const addActions = useRef()
-  const addActionsGraph = useRef()
+  const graphControl = useRef()
   const location = useLocation();
 
 
@@ -33,7 +33,7 @@ function App() {
     let newGraph = generateGraph(20, 40)
     setGraph(newGraph)
 
-    addActionsGraph.current?.([{action: "set", graph: newGraph}])
+    graphControl.current?.addActions([{action: "set", graph: newGraph}])
 
   }, [location.key])
 
@@ -90,7 +90,7 @@ function App() {
 
   async function startTopSort() {
     let data = await topsort(graph.edges, 4)
-    addActionsGraph.current(data)
+    graphControl.current?.addActions(data)
   }
 
   return (
@@ -102,8 +102,12 @@ function App() {
         <Route path="/topological-sort" element={
           <div style={{height: "600px"}}>
             <button onClick={startTopSort}>find</button>
+            <button onClick={() => graphControl.current.pauseHandler()}>pause</button>
+            <button onClick={() => graphControl.current.resumeHandler()}>resume</button>
+            <button onClick={() =>graphControl.current.stepBack()}>back</button>
+            <button onClick={() => graphControl.current.stepForward()}>forward</button>
             <Graph
-            getAddActions={(addActionsCbck)=> { addActionsGraph.current = addActionsCbck} }
+            getAnimationControlObject={(object)=> { graphControl.current = object} }
             />
           </div>
         } />

@@ -8,7 +8,7 @@ import dagre from 'cytoscape-dagre';
 cytoscape.use(dagre);
 
 
-const visualizationSpeed = 0.25
+const visualizationSpeed = 0.1
 
 
 export default function AVLTree(props) {
@@ -53,6 +53,8 @@ export default function AVLTree(props) {
             selector: 'node',
             style: {
                 content: 'data(id)',
+                "text-valign" : "center",
+                "text-halign" : "center"
             }
         },
         {
@@ -98,55 +100,57 @@ export default function AVLTree(props) {
 
 
 async function actionHandler({getCy, setGraph, action, ...props}) {
-    let actionType =  action.action
+    let actionType =  action.action 
 
     let cy = getCy()
 
     if(actionType === "select_node") {
         assignClassToNodes([action.key], [action.color], cy)
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "new_node") {
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
 
         assignClassToNodes([action.key], ["green"], cy)
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "remove_node") {
         assignClassToNodes([action.key], ["red"], cy)
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
         
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "replace_node") {
         assignClassToNodes([action.replacement, action.to_replace], ["orange"], cy)
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
 
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "rotate_node") {
         assignClassToNodes([action.key], ["orange"], cy)
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
         
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "final_tree") {
         clearAllClasses(cy)
-        await delay(visualizationSpeed*500)
+        if(action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "set") {
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
     }
+
+    action.handled = true
 }
 
 function convertTreeToCytoscapeElements(tree, cy) {

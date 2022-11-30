@@ -3,11 +3,11 @@ import useStateRef from "react-usestateref"
 import cytoscape from "cytoscape";
 import EventHandler from "./utilities/EventHandler";
 import CytoscapeComponent from "react-cytoscapejs";
-import dagre from "cytoscape-dagre"
+import fcose from "cytoscape-fcose"
 
-cytoscape.use(dagre);
+cytoscape.use(fcose);
 
-const visualizationSpeed = 1
+const visualizationSpeed = 0.1
 
 export default function Graph(props) {
 
@@ -23,8 +23,13 @@ export default function Graph(props) {
 
         eventHandler.current.start()
         
-        props.getAddActions?.(
-            eventHandler.current.addEvents.bind(eventHandler.current))
+        props.getAnimationControlObject?.({
+            addActions: eventHandler.current.addEvents.bind(eventHandler.current),
+            pauseHandler: eventHandler.current.pause.bind(eventHandler.current),
+            resumeHandler: eventHandler.current.resume.bind(eventHandler.current),
+            stepBack: eventHandler.current.back.bind(eventHandler.current),
+            stepForward: eventHandler.current.forward.bind(eventHandler.current),
+        })
 
         return () => eventHandler.current.stop()
     }, [])
@@ -37,7 +42,7 @@ export default function Graph(props) {
     }
 
     let layout = {
-        name: "breadthfirst",
+        name: "fcose",
         animate: true
     }
 
@@ -46,6 +51,8 @@ export default function Graph(props) {
             selector: 'node',
             style: {
                 content: 'data(id)',
+                "text-valign" : "center",
+                "text-halign" : "center"
             }
         },
         {
@@ -72,6 +79,18 @@ export default function Graph(props) {
             style: {
                 'background-color': "blue",
             }
+        },
+        {
+            selector: '.finished',
+            style: {
+                'background-color': "green",
+            }
+        },
+        {
+            selector: '.selectedEdge',
+            style: {
+                'line-color': "blue",
+            }
         }]
 
     useEffect(() => {
@@ -79,7 +98,6 @@ export default function Graph(props) {
         layoutObject?.run()
     }, [JSON.stringify(graph)])
 
-    cy?.nodes().ungrabify()
 
     return <CytoscapeComponent elements={graph} stylesheet={stylesheet} style={style} layout={layout} cy={setCy} />;
 }
@@ -122,18 +140,17 @@ export function generateGraph(countOfNodes, countOfConnections) {
 async function actionHandler({action, ...props} ) {
     let actionType =  action.action
 
-    console.log(action)
-
     let cy = props.getCy()
     if(actionType === "step") {
         let nodeClasses =  {
             selected: action.selected,
+            selectedEdge: action.selected_edge,
             path: action.path,
-            traversed: action.traversed
+            traversed: action.traversed,
         }
 
         assignClassToNodes(nodeClasses, cy)
-        await delay(visualizationSpeed*500)
+        if(!action.handled) await delay(visualizationSpeed*500)
     }
 
     if(actionType === "set") {
@@ -142,11 +159,17 @@ async function actionHandler({action, ...props} ) {
 
     if(actionType === "final_array") {
         clearAllClasses(cy)
+        for (let cyNode of cy.elements()) {
+            cyNode.addClass("finished")
+        }
+        if(!action.handled) await delay(visualizationSpeed*1000)
     }
 
     if(actionType === "error") {
         console.log(action.message)
     }
+
+    action.handled = true
 }
 
 function convertToCyFormat(graph, cy) {
@@ -169,7 +192,7 @@ function convertToCyFormat(graph, cy) {
 
     if (graph.edges) {
         for (const edge of graph.edges) {
-            elements.push({ data: { source: edge[0], target: edge[1] } })
+            elements.push({ data: { id: `${edge[0]} ${edge[1]}`, source: edge[0], target: edge[1] } })
         }
     }
 
@@ -182,6 +205,10 @@ function assignClassToNodes(nodeClasses, cy) {
     let selected = cy.getElementById(nodeClasses.selected)
     selected.removeClass("path")
     selected.addClass("selected")
+
+    let selectedEdge = cy.getElementById(`${nodeClasses.selectedEdge[0]} ${nodeClasses.selectedEdge[1]}`)
+    selectedEdge.addClass("selectedEdge")
+
     for (let pathNode of nodeClasses.path) {
         if(pathNode !== parseInt(selected.id())) {
             let cyNode = cy.getElementById(pathNode)
