@@ -4,36 +4,35 @@ import cytoscape from "cytoscape";
 import EventHandler from "./utilities/EventHandler";
 import CytoscapeComponent from "react-cytoscapejs";
 import fcose from "cytoscape-fcose"
+import { topsort } from "../requests";
+import GraphView from "./GraphView";
 
 cytoscape.use(fcose);
 
-const visualizationSpeed = 0.1
 
 export default function Graph(props) {
 
-    const [graph, setGraph, graphRef ] = useStateRef()
+    const graphViewInterface = useRef()
+    const interfaceObj = useRef()
+    const data = useRef()
 
+    const initializeInterfaceObject = () => {
+        interfaceObj.current = {
+            pause: graphViewInterface.current.pauseHandler,
+            resume: graphViewInterface.current.resumeHandler,
+            stepBack: graphViewInterface.current.stepBack,
+            stepForward: graphViewInterface.current.stepForward,
+            generateGraph: () => {
+                data.current = generateGraph(20, 40)
+                graphViewInterface.current.addActions([{ action: "set", graph: data.current }])
+                return data.current;
+            },
+            topsort: () => { startTopSort(data.current, graphViewInterface) }
+        }
+        props.getInterfaceObject(interfaceObj.current)
 
-    const [cy, setCy, cyRef] = useStateRef()
-    const eventHandler = useRef()
-
-    useEffect(() => {
-        eventHandler.current = new EventHandler(async (action) => 
-            await actionHandler({action:action, getCy: () => cyRef.current, setGraph: setGraph}))
-
-        eventHandler.current.start()
-        
-        props.getAnimationControlObject?.({
-            addActions: eventHandler.current.addEvents.bind(eventHandler.current),
-            pauseHandler: eventHandler.current.pause.bind(eventHandler.current),
-            resumeHandler: eventHandler.current.resume.bind(eventHandler.current),
-            stepBack: eventHandler.current.back.bind(eventHandler.current),
-            stepForward: eventHandler.current.forward.bind(eventHandler.current),
-        })
-
-        return () => eventHandler.current.stop()
-    }, [])
-
+        return interfaceObj.current
+    }
 
 
     let style = {
@@ -51,8 +50,8 @@ export default function Graph(props) {
             selector: 'node',
             style: {
                 content: 'data(id)',
-                "text-valign" : "center",
-                "text-halign" : "center"
+                "text-valign": "center",
+                "text-halign": "center"
             }
         },
         {
@@ -60,6 +59,12 @@ export default function Graph(props) {
             style: {
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'triangle'
+            }
+        },
+        {
+            selector: '.selectedEdge',
+            style: {
+                'line-color': "blue",
             }
         },
         {
@@ -85,34 +90,31 @@ export default function Graph(props) {
             style: {
                 'background-color': "green",
             }
-        },
-        {
-            selector: '.selectedEdge',
-            style: {
-                'line-color': "blue",
-            }
         }]
 
-    useEffect(() => {
-        let layoutObject = cy?.elements().makeLayout(layout);
-        layoutObject?.run()
-    }, [JSON.stringify(graph)])
-
-
-    return <CytoscapeComponent elements={graph} stylesheet={stylesheet} style={style} layout={layout} cy={setCy} />;
+    return <GraphView
+        stylesheet={stylesheet}
+        style={style}
+        layout={layout}
+        getInterfaceObject={(obj) => { graphViewInterface.current = obj; initializeInterfaceObject() }}
+        visualizationSpeed={0.5}
+        actionHandler={actionHandler} />;
 }
 
-export function generateGraph(countOfNodes, countOfConnections) {
+
+
+
+function generateGraph(countOfNodes, countOfConnections) {
     let nodes = []
-    for(let i = 0; i < countOfNodes;  i++) {
+    for (let i = 0; i < countOfNodes; i++) {
         nodes.push(i)
     }
 
     function includesEdge(arrayOfEdges, edge) {
-        if(!edge) return false
-        
-        for(let edgeInArray of arrayOfEdges) {
-            if(edgeInArray[0] === edge[0] && edgeInArray[1] === edge[1]) {
+        if (!edge) return false
+
+        for (let edgeInArray of arrayOfEdges) {
+            if (edgeInArray[0] === edge[0] && edgeInArray[1] === edge[1]) {
                 return true
             }
         }
@@ -121,28 +123,36 @@ export function generateGraph(countOfNodes, countOfConnections) {
     }
 
     let edges = []
-    for(let i = 0; i < countOfConnections; i++) {
+    for (let i = 0; i < countOfConnections; i++) {
         let newEdge = null
 
         do {
-            let node1Index = Math.floor(Math.random()*(nodes.length-1))
-            let node2Index = node1Index + 1 + Math.floor(Math.random()*(nodes.length-node1Index-1))
+            let node1Index = Math.floor(Math.random() * (nodes.length - 1))
+            let node2Index = node1Index + 1 + Math.floor(Math.random() * (nodes.length - node1Index - 1))
             newEdge = [nodes[node1Index], nodes[node2Index]]
-        } while(includesEdge(edges, newEdge))
+        } while (includesEdge(edges, newEdge))
 
         edges.push(newEdge)
     }
 
-    return {nodes, edges}
+    return { nodes, edges }
+}
+
+async function startTopSort(graph, controlObj) {
+    let data = await topsort(graph.edges, 4)
+    controlObj.current?.addActions(data)
 }
 
 
-async function actionHandler({action, ...props} ) {
-    let actionType =  action.action
+
+
+async function actionHandler({ action, ...props }) {
+    let actionType = action.action
+    let visualizationSpeed = props.visualizationSpeed
 
     let cy = props.getCy()
-    if(actionType === "step") {
-        let nodeClasses =  {
+    if (actionType === "step") {
+        let nodeClasses = {
             selected: action.selected,
             selectedEdge: action.selected_edge,
             path: action.path,
@@ -150,22 +160,22 @@ async function actionHandler({action, ...props} ) {
         }
 
         assignClassToNodes(nodeClasses, cy)
-        if(!action.handled) await delay(visualizationSpeed*500)
+        if (!action.handled) await delay(visualizationSpeed * 500)
     }
 
-    if(actionType === "set") {
+    if (actionType === "set") {
         props.setGraph(convertToCyFormat(action.graph, cy))
     }
 
-    if(actionType === "final_array") {
+    if (actionType === "final_array") {
         clearAllClasses(cy)
         for (let cyNode of cy.elements()) {
             cyNode.addClass("finished")
         }
-        if(!action.handled) await delay(visualizationSpeed*1000)
+        if (!action.handled) await delay(visualizationSpeed * 1000)
     }
 
-    if(actionType === "error") {
+    if (actionType === "error") {
         console.log(action.message)
     }
 
@@ -183,10 +193,10 @@ function convertToCyFormat(graph, cy) {
     }
 
     let elements = []
-    
-    if(graph.nodes) {
+
+    if (graph.nodes) {
         for (const node of graph.nodes) {
-            elements.push({ data: { id: node, label: `${node}` }, classes: null})
+            elements.push({ data: { id: node, label: `${node}` }, classes: null })
         }
     }
 
@@ -201,7 +211,7 @@ function convertToCyFormat(graph, cy) {
 
 function assignClassToNodes(nodeClasses, cy) {
     clearAllClasses(cy)
-    
+
     let selected = cy.getElementById(nodeClasses.selected)
     selected.removeClass("path")
     selected.addClass("selected")
@@ -210,7 +220,7 @@ function assignClassToNodes(nodeClasses, cy) {
     selectedEdge.addClass("selectedEdge")
 
     for (let pathNode of nodeClasses.path) {
-        if(pathNode !== parseInt(selected.id())) {
+        if (pathNode !== parseInt(selected.id())) {
             let cyNode = cy.getElementById(pathNode)
             cyNode.addClass("path")
         }
@@ -228,6 +238,8 @@ function clearAllClasses(cy) {
         node.removeClass(node.classes())
     }
 }
+
+
 
 
 function delay(ms) {

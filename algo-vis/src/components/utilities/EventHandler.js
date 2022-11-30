@@ -1,7 +1,7 @@
 import Queue from "./Queue";
 
 export default class EventHandler {
-    #eventQueue = new Queue();
+    #eventQueue = new Queue(100);
     #currentResolve = null;
     #closed = false;
     #paused = false

@@ -2,14 +2,14 @@
 export default class Queue {
 
     #elements = [];
-    constructor() {
+    constructor(maxBufferLength=0, bufferEverything=false) {
         this.head = null
         this.tail = null
         this.bufferedHead = null
         this.bufferedLength = 0
         this.length = 0
-        this.maxBufferLength = 10
-        this.bufferEverything = false
+        this.maxBufferLength = maxBufferLength
+        this.bufferEverything = bufferEverything
     }
 
     enqueue(...elements) {
