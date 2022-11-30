@@ -1,8 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import useStateRef from "react-usestateref"
+import { useRef } from "react";
 import cytoscape from "cytoscape";
-import EventHandler from "./utilities/EventHandler";
-import CytoscapeComponent from "react-cytoscapejs";
 import fcose from "cytoscape-fcose"
 import { topsort } from "../requests";
 import GraphView from "./GraphView";
@@ -15,6 +12,7 @@ export default function Graph(props) {
     const graphViewInterface = useRef()
     const interfaceObj = useRef()
     const data = useRef()
+    const startNode = 8
 
     const initializeInterfaceObject = () => {
         interfaceObj.current = {
@@ -27,7 +25,7 @@ export default function Graph(props) {
                 graphViewInterface.current.addActions([{ action: "set", graph: data.current }])
                 return data.current;
             },
-            topsort: () => { startTopSort(data.current, graphViewInterface) }
+            topsort: () => { startTopSort(data.current, startNode,graphViewInterface) }
         }
         props.getInterfaceObject(interfaceObj.current)
 
@@ -138,8 +136,8 @@ function generateGraph(countOfNodes, countOfConnections) {
     return { nodes, edges }
 }
 
-async function startTopSort(graph, controlObj) {
-    let data = await topsort(graph.edges, 4)
+async function startTopSort(graph, startNode,controlObj) {
+    let data = await topsort(graph.edges, startNode)
     controlObj.current?.addActions(data)
 }
 

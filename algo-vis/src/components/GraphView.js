@@ -22,7 +22,8 @@ export default function GraphView(props) {
                         action: action, 
                         getCy: () => cyRef.current, 
                         setGraph: setGraph,
-                        getGraph: () => graphRef.current
+                        getGraph: () => graphRef.current,
+                        ...props.actionHandlerArgs
                     }))
 
         eventHandler.current.start()
