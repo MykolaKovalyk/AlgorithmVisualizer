@@ -24,7 +24,6 @@ export default function FlowControlPanel({
         onViewCleared(clearViewCallback)
     }, [])
 
-    console.log(paused)
     return <div className={styles.control_panel}>
         <button className={styles.back_button} type="button" onClick={
             () => {

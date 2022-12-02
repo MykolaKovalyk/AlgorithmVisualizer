@@ -37,7 +37,7 @@ export default function AVLTree(props) {
             clear: async () => {
                 await avlClear(identifier)
                 graphViewInterface.current.reset()
-                graphViewInterface.current.addActions([{ action: "set", tree: [] }])
+                graphViewInterface.current.addActions([{ type: "set", tree: [] }])
             },
             test: async (numberAdded, numberRemoved) => {
                 let newNodes = []
@@ -62,7 +62,7 @@ export default function AVLTree(props) {
             }
         }
         props.getInterfaceObject(interfaceObj.current)
-        graphViewInterface.current.addActions([{ action: "set", tree: await getTree(identifier) }])
+        graphViewInterface.current.addActions([{ type: "set", tree: await getTree(identifier) }])
 
         graphViewInterface.current.getCy().nodes().ungrabify()
 
@@ -176,7 +176,7 @@ export default function AVLTree(props) {
 
 
 async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {
-    let actionType = action.action
+    let actionType = action.type
     let visualizationDuration = props.getVisualizationDuration?.()
 
 

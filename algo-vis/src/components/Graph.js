@@ -11,7 +11,7 @@ export default function Graph(props) {
 
     const graphViewInterface = useRef()
     const interfaceObj = useRef()
-    const data = useRef()
+    const data = useRef({})
 
     const initializeInterfaceObject = () => {
         interfaceObj.current = {
@@ -20,30 +20,37 @@ export default function Graph(props) {
             stepBack: graphViewInterface.current.stepBack,
             stepForward: graphViewInterface.current.stepForward,
             isPaused: () => graphViewInterface.current.getHandler().paused,
+            clear: () => {
+                graphViewInterface.current.reset()
+                data.current = { nodes: [], edges: [] }
+                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
+            },
             getGraph: () => data.current,
-            initializeGraph: (edges) => {
+            setGraph: (edges) => {
                 let nodes = []
-                for(let edge of edges) {
-                    for(let edgeNode of edge) {
-                        if(!nodes.includes(edgeNode)) {
+                for (let edge of edges) {
+                    for (let edgeNode of edge) {
+                        if (!nodes.includes(edgeNode)) {
                             nodes.push(edgeNode)
                         }
                     }
                 }
-                graphViewInterface.current.addActions([{ action: "set", graph: {nodes, edges} }])
+                data.current = { nodes, edges }
+                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
             },
-            generateGraph: (countOfNodes, countOfEdges) => {
-                data.current = generateGraph(countOfNodes, countOfEdges)
-                graphViewInterface.current.addActions([{ action: "set", graph: data.current }])
+            generateGraph: (countOfNodes, minCountOfEdges, maxCountOfEdges) => {
+                data.current = generateGraph(countOfNodes, minCountOfEdges, maxCountOfEdges)
+                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
                 return data.current;
             },
-            topsort: (startNode) => { startTopSort(data.current, startNode, graphViewInterface) }
+            topsort: (startNode) => { topologicalSort(data.current, startNode, graphViewInterface) }
         }
+
+        graphViewInterface.current.addActions([{ type: "set", graph: { nodes: [], edges: [] } }])
         props.getInterfaceObject(interfaceObj.current)
 
         return interfaceObj.current
     }
-
 
     let style = props.style || {
         width: "100%",
@@ -125,14 +132,14 @@ export default function Graph(props) {
         layout={layout}
         getInterfaceObject={(obj) => { graphViewInterface.current = obj; initializeInterfaceObject() }}
         visualizationDuration={props.visualizationDuration}
-        actionHandler={actionHandler} 
-        actionHandlerArgs={{ onNewTraversedArray: props.onNewTraversedArray }}/>;
+        actionHandler={actionHandler}
+        actionHandlerArgs={{ onMessage: props.onMessage }} />;
 }
 
 
 
 
-function generateGraph(countOfNodes, countOfConnections) {
+function generateGraph(countOfNodes, minCountOfEdgesPerNode, maxCountOfEdgesPerNode) {
     let nodes = []
     for (let i = 0; i < countOfNodes; i++) {
         nodes.push(i)
@@ -151,22 +158,29 @@ function generateGraph(countOfNodes, countOfConnections) {
     }
 
     let edges = []
-    for (let i = 0; i < countOfConnections; i++) {
-        let newEdge = null
+    console.log(nodes)
 
-        do {
-            let node1Index = Math.floor(Math.random() * (nodes.length - 1))
-            let node2Index = node1Index + 1 + Math.floor(Math.random() * (nodes.length - node1Index - 1))
-            newEdge = [nodes[node1Index], nodes[node2Index]]
-        } while (includesEdge(edges, newEdge))
+    for (let sourceNodeIndex = 0; sourceNodeIndex < nodes.length; sourceNodeIndex++) {
+        let countOfEdges = Math.min(
+            minCountOfEdgesPerNode + Math.floor(Math.random() * (maxCountOfEdgesPerNode - minCountOfEdgesPerNode)),
+            nodes.length - sourceNodeIndex - 1
+        )
+        console.log(countOfEdges, sourceNodeIndex)
+        for (let i = 0; i < countOfEdges; i++) {
 
-        edges.push(newEdge)
+            let newEdge = null
+            do {
+                let targetNodeIndex = sourceNodeIndex + 1 + Math.floor(Math.random() * (nodes.length - sourceNodeIndex - 1))
+                newEdge = [nodes[sourceNodeIndex], nodes[targetNodeIndex]]
+            } while (includesEdge(edges, newEdge))
+            edges.push(newEdge)
+        }
     }
 
     return { nodes, edges }
 }
 
-async function startTopSort(graph, startNode, controlObj) {
+async function topologicalSort(graph, startNode, controlObj) {
     let data = await topsort(graph.edges, startNode)
     controlObj.current?.addActions(data)
 }
@@ -175,10 +189,10 @@ async function startTopSort(graph, startNode, controlObj) {
 
 
 async function actionHandler({ action, ...props }) {
-    let actionType = action.action
+    let actionType = action.type
     let visualizationDuration = props.getVisualizationDuration?.()
-
     let cy = props.getCy()
+
     if (actionType === "step") {
         let nodeClasses = {
             selected: action.selected,
@@ -187,14 +201,14 @@ async function actionHandler({ action, ...props }) {
             traversed: action.traversed,
         }
 
-        props.onNewTraversedArray?.(action.traversed)
+        props.onMessage?.(JSON.stringify(action.traversed))
 
         assignClassToNodes(nodeClasses, cy)
         if (!action.handled) await delay(visualizationDuration * 1000)
     }
 
     if (actionType === "set") {
-        props.setGraph(convertToCyFormat(action.graph, cy))
+        props.setGraph(toCytoscapeElements(action.graph, cy))
     }
 
     if (actionType === "final_array") {
@@ -211,13 +225,13 @@ async function actionHandler({ action, ...props }) {
             let cyNode = cy.getElementById(pathNode)
             cyNode.addClass("cycle")
         }
-        props.onNewTraversedArray?.(`Graph is not acyclic. Cycle ${action.traverse_stack} was found`)
+        props.onMessage?.(`Graph is not acyclic. Cycle in the path [${action.traverse_stack}] was found`)
     }
 
     action.handled = true
 }
 
-function convertToCyFormat(graph, cy) {
+function toCytoscapeElements(graph, cy) {
 
     if (!graph) {
         return {}

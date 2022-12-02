@@ -18,19 +18,19 @@ export default function GraphView(props) {
 
     useEffect(() => {
         eventHandler.current = new EventHandler(
-            async (action) => 
+            async (action) =>
                 await props.actionHandler(
                     {
                         getVisualizationDuration: () => { return visualizationDuration.current },
-                        action: action, 
-                        getCy: () => cyRef.current, 
+                        action: action,
+                        getCy: () => cyRef.current,
                         setGraph: setGraph,
                         getGraph: () => graphRef.current,
                         ...props.actionHandlerArgs
                     }))
 
         eventHandler.current.start()
-        
+
         props.getInterfaceObject?.({
             addActions: eventHandler.current.addEvents.bind(eventHandler.current),
             pauseHandler: eventHandler.current.pause.bind(eventHandler.current),
@@ -48,20 +48,20 @@ export default function GraphView(props) {
     }, [])
 
     useEffect(() => {
-        if(!props.layout) return;
+        if (!props.layout) return;
 
         let layoutObject = cy?.elements().makeLayout(props.layout);
         layoutObject?.run()
     }, [JSON.stringify(graph)])
 
 
-    return <CytoscapeComponent 
-                elements={graph} 
-                stylesheet={props.stylesheet}
-                style={props.style} 
-                layout={props.layout}
-                maxZoom={2}
-                minZoom={0.25}
-                cy={setCy}
-            />;
+    return <CytoscapeComponent
+        elements={graph}
+        stylesheet={props.stylesheet}
+        style={props.style}
+        layout={props.layout}
+        maxZoom={2}
+        minZoom={0.25}
+        cy={setCy}
+    />;
 }

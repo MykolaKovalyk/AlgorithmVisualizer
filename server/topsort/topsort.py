@@ -8,13 +8,13 @@ class ActionLogger:
         self._action_list.append(action)
 
     def new_step(self, selected_node, selected_edge, traversal_path, traversed):
-        self.add({"action": "step",  "selected": selected_node, "selected_edge": selected_edge, "path": list(traversal_path), "traversed": list(traversed)})
+        self.add({"type": "step",  "selected": selected_node, "selected_edge": selected_edge, "path": list(traversal_path), "traversed": list(traversed)})
 
     def final_array(self, final_array):
-        self.add({"action": "final_array",  "array": final_array})
+        self.add({"type": "final_array",  "array": final_array})
     
     def found_cycle(self, traverse_stack):
-        self.add({"action": "found_cycle", "traverse_stack": traverse_stack})
+        self.add({"type": "found_cycle", "traverse_stack": traverse_stack})
 
 
     def read_all(self) -> List[Any]:
@@ -39,7 +39,6 @@ def topsort(edges, start):
     
     traversed_nodes = []
 
-
     for node in nodes:
         if node not in traversed_nodes:
             visited = []
@@ -49,9 +48,7 @@ def topsort(edges, start):
             while len(traverse_stack) > 0:
                 parent_node = current_node
                 current_node = traverse_stack[-1]
-                logger.new_step(current_node,[parent_node, current_node], traverse_stack, traversed_nodes)
-
-
+                logger.new_step(current_node, [parent_node, current_node], traverse_stack, traversed_nodes)
 
                 found_unvisited = False
                 for edge in edges:
@@ -69,12 +66,10 @@ def topsort(edges, start):
                     traversed_nodes.insert(0, current_node)
                 
                 visited.append(current_node)
-    
+
     logger.new_step(None, [], [], traversed_nodes)
     logger.final_array(traversed_nodes)
-
     return traversed_nodes, logger
-
 
 if __name__ ==  "__main__":
     print(topsort([[1, 2],  [1, 3], [1, 4], [3, 2], [2, 4], [3, 6], [6, 4]], 3))

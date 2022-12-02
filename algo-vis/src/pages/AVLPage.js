@@ -59,18 +59,24 @@ export default function AVLPage() {
                     </div>
                     <Button
                         className={styles.button}
-                        onClick={() => treeInterface.current.find(parseInt(input.current.value))}>find</Button>
+                        onClick={() => treeInterface.current.find(parseInt(input.current.value))}>
+                        find
+                    </Button>
                     <Button
                         className={styles.button}
-                        onClick={() => treeInterface.current.insert(parseInt(input.current.value))}>insert</Button>
+                        onClick={() => treeInterface.current.insert(parseInt(input.current.value))}>
+                        insert
+                    </Button>
                     <Button
                         className={styles.button}
-                        onClick={() => treeInterface.current.remove(parseInt(input.current.value))}>remove</Button>
+                        onClick={() => treeInterface.current.remove(parseInt(input.current.value))}>
+                        remove
+                    </Button>
                 </div>
             </div>
             <Button className={styles.clear_button} onClick={() => {
                 onViewClearedCbck.current?.()
-                return treeInterface.current.clear()
+                treeInterface.current.clear()
             }}>clear</Button>
 
             <Button className={styles.show_advanced_button} onClick={() => advancedOptionsVisible.current.setVisible(true)}>show advaned</Button>
@@ -86,11 +92,12 @@ export default function AVLPage() {
                     times
                 </div>
                 <Button className={styles.modal_button} onClick={() => {
-                    console.log(animationIntervalinput.current.value)
                     if (animationIntervalinput.current.value.length > 0) {
                         setInterval(parseFloat(animationIntervalinput.current.value))
                     }
-                }}>submit</Button>
+                }}>
+                    submit
+                </Button>
                 <div className={styles.modal_text_container}>
                     Test tree with
                     <input placeholder={DEFAULT_COUNT_OF_TEST_ADDITIONS} className={styles.number_input} ref={testAddItemsInput} />
@@ -104,7 +111,7 @@ export default function AVLPage() {
 
                     if (isNaN(addedCount) || isNaN(removedCount)) return;
 
-                    if(addedCount < removedCount) return;
+                    if (addedCount < removedCount) return;
 
                     treeInterface.current.test(addedCount, removedCount)
                     advancedOptionsVisible.current.setVisible(false)

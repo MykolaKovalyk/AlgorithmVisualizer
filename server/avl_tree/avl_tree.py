@@ -480,13 +480,13 @@ class ActionLogger:
         self._action_list.append(action)
 
     def final_tree(self):
-        self.add({"action": "final_tree", "message": "Done!" })
+        self.add({"type": "final_tree", "message": "Done!" })
 
 
     def mark_nodes(self, nodes, reason, message=None):
         self.add(
             {
-                    "action": "mark_nodes", 
+                    "type": "mark_nodes", 
                     "nodes": nodes,
                     "reason": reason,
                     "message": message
@@ -495,12 +495,12 @@ class ActionLogger:
     def refresh_state(self):
         self.add(
             {
-                    "action": "refresh_state",
+                    "type": "refresh_state",
                     "tree": self.tree.to_json()
             })
 
     def error(self, error_message):
-        self.add({"action": "error", "message": error_message})
+        self.add({"type": "error", "message": error_message})
 
     def read_all(self) -> List[Any]:
         self.final_tree()

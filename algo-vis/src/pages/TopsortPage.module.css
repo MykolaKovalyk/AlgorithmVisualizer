@@ -16,7 +16,7 @@
 .data_input_buttons {
     display: flex;
     width: fit-content;
-    margin: 20px auto;
+    margin: 20px auto 0 auto;
 
 }
 
@@ -31,15 +31,32 @@
     margin: 10px;
 }
 
-
-.input_table {
-    width: fit-content;
-    margin: 0 auto;
+.clear_button {
+    display: block;
+    width: 150px;
+    margin: 10px auto;
 }
 
 
 
-.choose_starting_edge_popup {
+.input_table {
+    width: fit-content;
+    padding: 10px;
+    margin: 10px auto;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+
+
+.short_number_input {
+    width: 40px;
+    height: 25px;
+    margin: 10px;
+}
+
+.popup {
     position: relative;
     margin: 100px auto;
     padding: 30px;

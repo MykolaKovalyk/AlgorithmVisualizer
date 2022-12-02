@@ -1,5 +1,5 @@
 import styles from "./TopsortPage.module.css"
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Graph from "../components/Graph";
 import FlowControlPanel from "../components/FlowControlPanel";
 import Table from "../components/Table"
@@ -7,32 +7,53 @@ import Button from "../components/Button";
 import Modal from "../components/Modal";
 
 
+const DEFAULT_ANIMATION_DURATION_FACTOR = 0.5
+const DEFAULT_COUNT_OF_GENERATED_NODES = 20
+const DEFAULT_COUNT_OF_MIN_EDGES_PER_GENERATED_NODE = 1
+const DEFAULT_COUNT_OF_MAX_EDGES_PER_GENERATED_NODE = 3
+
 export default function TopsortPage(props) {
     const graphInterface = useRef()
     const onViewClearedCbck = useRef()
     const messageLabel = useRef()
+    const animationIntervalInput = useRef()
+
+    const generatedNodesInput = useRef()
+    const minEdgesPerGeneratedNodeInput = useRef()
+    const maxEdgesPerGeneratedNodeInput = useRef()
+
     const tableInterfaceObj = useRef()
     const startingNodePopup = useRef()
+    const generateGraphPopup = useRef()
     const startingNodeInput = useRef()
     const startingNodeResponse = useRef()
+
+    const [intervalBetweenAnimations, setInterval] = useState(DEFAULT_ANIMATION_DURATION_FACTOR)
+
+    useEffect(() => {
+        animationIntervalInput.current.value = DEFAULT_ANIMATION_DURATION_FACTOR
+        generatedNodesInput.current.value =  DEFAULT_COUNT_OF_GENERATED_NODES
+        minEdgesPerGeneratedNodeInput.current.value = DEFAULT_COUNT_OF_MIN_EDGES_PER_GENERATED_NODE
+        maxEdgesPerGeneratedNodeInput.current.value =  DEFAULT_COUNT_OF_MAX_EDGES_PER_GENERATED_NODE
+    }, [])
 
     return <div>
 
         <div className={styles.output_area}>
             <b>Output array:</b>
-            <div ref={messageLabel}>Waiting for you to start...</div>
+            <div ref={messageLabel} style={{overflowX: "auto"}}>Waiting for you to start...</div>
         </div>
         <div className={styles.view}>
-            <Graph 
-                
-                getInterfaceObject={(object) => { 
+            <Graph
+
+                getInterfaceObject={(object) => {
                     graphInterface.current = object;
                 }}
-                visualizationDuration={0.5}
-                onNewTraversedArray={(array) => { messageLabel.current.innerHTML = JSON.stringify(array); console.log("Hi")}}
+                visualizationDuration={intervalBetweenAnimations}
+                onMessage={(message) => messageLabel.current.innerHTML = message}
             />
         </div>
-        
+
         <FlowControlPanel
             pause={() => graphInterface.current.pause()}
             resume={() => graphInterface.current.resume()}
@@ -41,34 +62,57 @@ export default function TopsortPage(props) {
             stepForward={() => graphInterface.current.stepForward()}
             onViewCleared={(onViewClearedCallback) => onViewClearedCbck.current = onViewClearedCallback}
         />
+
         <div className={styles.data_input}>
             <div className={styles.data_input_buttons}>
                 <Button className={styles.submit_data_button} onClick={
                     () => {
-                        graphInterface.current.initializeGraph(tableInterfaceObj.current.getData())
+                        graphInterface.current.setGraph(tableInterfaceObj.current.getData())
                     }
-                }>Submit</Button>
+                }>
+                    Submit
+                </Button>
                 <Button className={styles.start_button} onClick={
                     () => {
                         startingNodePopup.current.setVisible(true)
                     }
-                }>Start</Button>
+                }>
+                    Start
+                </Button>
                 <Button className={styles.start_button} onClick={
-                    () => {
-                        tableInterfaceObj.current.setData(graphInterface.current.generateGraph(20, 40).edges)
-                    }
-                }>Generate</Button>
+                    () => generateGraphPopup.current.setVisible(true)
+                }>
+                    Generate
+                </Button>
             </div>
+            <Button className={styles.clear_button} onClick={() => {
+                onViewClearedCbck.current?.()
+                return graphInterface.current.clear()
+            }}>
+                Clear
+            </Button>
             <center>Input your data:</center>
-            <Table 
+            <Table
                 className={styles.input_table}
-                getSetterAndGetter={(setCallback, getCallback) => tableInterfaceObj.current = {setData: setCallback, getData: getCallback}}/>
+                getSetterAndGetter={(setCallback, getCallback) => tableInterfaceObj.current = { setData: setCallback, getData: getCallback }} />
         </div>
         <Modal
-            className={styles.choose_starting_edge_popup}
+            className={styles.popup}
             setCallbacks={(setVisible, getVisible) => startingNodePopup.current = { setVisible, getVisible }}
         >
             <div className={styles.modal_container}>
+                <div className={styles.modal_text_container}>
+                    Slow down by
+                    <input placeholder={DEFAULT_ANIMATION_DURATION_FACTOR} className={styles.short_number_input} type="number" ref={animationIntervalInput} />
+                    times
+                </div>
+                <Button className={styles.modal_button} onClick={() => {
+                    if (animationIntervalInput.current.value.length > 0) {
+                        setInterval(parseFloat(animationIntervalInput.current.value))
+                    }
+                }}>
+                    submit
+                </Button>
                 <div className={styles.modal_text_container} ref={startingNodeResponse} >
                     Choose the starting node:
                 </div>
@@ -76,13 +120,13 @@ export default function TopsortPage(props) {
                 <Button className={styles.modal_button} onClick={() => {
                     let startNode = parseInt(startingNodeInput.current.value)
 
-                    if(isNaN(startNode)) {
-                        startingNodeResponse.current.innerHTML =  "Error - incorrect format, should be a whole number."
+                    if (isNaN(startNode)) {
+                        startingNodeResponse.current.innerHTML = "Error - incorrect format, should be a whole number."
                         return
                     }
 
-                    if(!graphInterface.current.getGraph()?.nodes.includes(startNode)) {
-                        startingNodeResponse.current.innerHTML =  "Error - specified node is not in the node list."
+                    if (!graphInterface.current.getGraph()?.nodes.includes(startNode)) {
+                        startingNodeResponse.current.innerHTML = "Error - specified node is not in the node list."
                         return
                     }
 
@@ -91,6 +135,40 @@ export default function TopsortPage(props) {
                 }}>start</Button>
             </div>
             <Button className={styles.close_modal_button} onClick={() => startingNodePopup.current.setVisible(false)}>close</Button>
+        </Modal>
+        <Modal
+            className={styles.popup}
+            setCallbacks={(setVisible, getVisible) => generateGraphPopup.current = { setVisible, getVisible }}
+        >
+            <div className={styles.modal_container}>
+                <div className={styles.modal_text_container}>
+                    <center>
+                        Generate graph of
+                        <input placeholder={DEFAULT_COUNT_OF_GENERATED_NODES} className={styles.short_number_input} type="number" ref={generatedNodesInput} />
+                        nodes, each having at least
+                        <input placeholder={DEFAULT_COUNT_OF_MIN_EDGES_PER_GENERATED_NODE} className={styles.short_number_input} type="number" ref={minEdgesPerGeneratedNodeInput} />
+                        and at most 
+                        <input placeholder={DEFAULT_COUNT_OF_MAX_EDGES_PER_GENERATED_NODE} className={styles.short_number_input} type="number" ref={maxEdgesPerGeneratedNodeInput} />
+                        edges
+                    </center>
+                </div>
+                <Button className={styles.modal_button} onClick={() => {
+                    let nodeCount = parseInt(generatedNodesInput.current.value)
+                    let minEdgeCount = parseInt(minEdgesPerGeneratedNodeInput.current.value)
+                    let maxEdgeCount = parseInt(maxEdgesPerGeneratedNodeInput.current.value)
+
+                    if (isNaN(nodeCount) || isNaN(maxEdgeCount)) return;
+
+                    if (maxEdgeCount > nodeCount - 1) return;
+
+                    graphInterface.current.generateGraph(nodeCount, minEdgeCount, maxEdgeCount)
+                    tableInterfaceObj.current.setData(graphInterface.current.getGraph().edges)
+                    generateGraphPopup.current.setVisible(false)
+                }}>
+                    submit
+                </Button>
+            </div>
+            <Button className={styles.close_modal_button} onClick={() => generateGraphPopup.current.setVisible(false)}>close</Button>
         </Modal>
     </div>
 }
