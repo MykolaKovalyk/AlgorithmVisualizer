@@ -12,13 +12,16 @@ export default function GraphView(props) {
     const [graph, setGraph, graphRef] = useStateRef()
     const [cy, setCy, cyRef] = useStateRef()
     const eventHandler = useRef()
+    const visualizationDuration = useRef()
+
+    visualizationDuration.current = props.visualizationDuration
 
     useEffect(() => {
         eventHandler.current = new EventHandler(
             async (action) => 
                 await props.actionHandler(
                     {
-                        visualizationSpeed: props.visualizationSpeed,
+                        getVisualizationDuration: () => { return visualizationDuration.current },
                         action: action, 
                         getCy: () => cyRef.current, 
                         setGraph: setGraph,
@@ -34,7 +37,9 @@ export default function GraphView(props) {
             resumeHandler: eventHandler.current.resume.bind(eventHandler.current),
             stepBack: eventHandler.current.back.bind(eventHandler.current),
             stepForward: eventHandler.current.forward.bind(eventHandler.current),
+            reset: eventHandler.current.dropBufferedEvents.bind(eventHandler.current),
             getCy: () => cyRef.current,
+            getHandler: () => eventHandler.current,
             setGraph: setGraph,
             getGraph: () => graphRef.current
         })
@@ -55,6 +60,8 @@ export default function GraphView(props) {
                 stylesheet={props.stylesheet}
                 style={props.style} 
                 layout={props.layout}
+                maxZoom={2}
+                minZoom={0.25}
                 cy={setCy}
             />;
 }

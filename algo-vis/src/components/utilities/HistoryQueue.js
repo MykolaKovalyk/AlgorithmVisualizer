@@ -1,15 +1,17 @@
+// A queue that allows retrieving previously dequeued items, in reverse order
+// Implemented as a double-linked list
+
 
 export default class Queue {
 
-    #elements = [];
-    constructor(maxBufferLength=0, bufferEverything=false) {
+    constructor(maxBufferLength=0) {
         this.head = null
         this.tail = null
         this.bufferedHead = null
-        this.bufferedLength = 0
         this.length = 0
+        this.bufferedLength = 0
+
         this.maxBufferLength = maxBufferLength
-        this.bufferEverything = bufferEverything
     }
 
     enqueue(...elements) {
@@ -38,7 +40,7 @@ export default class Queue {
             this.bufferedHead = item
         }
 
-        if(!this.bufferEverything) {
+        if(this.bufferedLength > -1) {
             while (this.bufferedLength > this.maxBufferLength) {
                 this.bufferedHead = this.bufferedHead === this.head ? null : this.bufferedHead.next
 
@@ -68,18 +70,19 @@ export default class Queue {
         return this.head.previous.element;
     }
 
-    peek() {
-        return this.#elements[this.head];
-    }
-
-    reset() {
-        this.head = 0;
-        this.tail = 0;
+    clear() {
+        this.head = null;
+        this.tail = null;
+        this.bufferedHead = null;
+        this.length = 0;
+        this.bufferedLength = 0;
     }
 
     set elements(value) {
-        this.#elements = value
-        this.reset()
+        this.clear()
+        for(let element of value) {
+            this.enqueue(element)
+        }
     }
 
     get elements() {
@@ -98,6 +101,10 @@ export default class Queue {
 
     get isEmpty() {
         return this.length === 0;
+    }
+
+    get isBufferEmpty() {
+        return this.bufferedLength === 0;
     }
 }
 

@@ -13,8 +13,8 @@ class ActionLogger:
     def final_array(self, final_array):
         self.add({"action": "final_array",  "array": final_array})
     
-    def error(self, error_message):
-        self.add({"action": "error", "message": error_message})
+    def found_cycle(self, traverse_stack):
+        self.add({"action": "found_cycle", "traverse_stack": traverse_stack})
 
 
     def read_all(self) -> List[Any]:
@@ -57,7 +57,7 @@ def topsort(edges, start):
                 for edge in edges:
                     if edge[0] == current_node:
                         if edge[1] in traverse_stack:
-                            logger.error(f"Graph is not acyclic. Cycle {traverse_stack} was found")
+                            logger.found_cycle(traverse_stack)
                             return None, logger
                         if edge[1] not in traversed_nodes and edge[1] not in visited:
                             traverse_stack.append(edge[1])

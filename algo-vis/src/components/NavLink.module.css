@@ -1,0 +1,17 @@
+
+
+.a {
+    font-size: larger;
+    margin: auto 30px ;
+    text-decoration: none;
+    color: black;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+
+
+

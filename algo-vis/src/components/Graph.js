@@ -12,7 +12,6 @@ export default function Graph(props) {
     const graphViewInterface = useRef()
     const interfaceObj = useRef()
     const data = useRef()
-    const startNode = 8
 
     const initializeInterfaceObject = () => {
         interfaceObj.current = {
@@ -20,12 +19,25 @@ export default function Graph(props) {
             resume: graphViewInterface.current.resumeHandler,
             stepBack: graphViewInterface.current.stepBack,
             stepForward: graphViewInterface.current.stepForward,
-            generateGraph: () => {
-                data.current = generateGraph(20, 40)
+            isPaused: () => graphViewInterface.current.getHandler().paused,
+            getGraph: () => data.current,
+            initializeGraph: (edges) => {
+                let nodes = []
+                for(let edge of edges) {
+                    for(let edgeNode of edge) {
+                        if(!nodes.includes(edgeNode)) {
+                            nodes.push(edgeNode)
+                        }
+                    }
+                }
+                graphViewInterface.current.addActions([{ action: "set", graph: {nodes, edges} }])
+            },
+            generateGraph: (countOfNodes, countOfEdges) => {
+                data.current = generateGraph(countOfNodes, countOfEdges)
                 graphViewInterface.current.addActions([{ action: "set", graph: data.current }])
                 return data.current;
             },
-            topsort: () => { startTopSort(data.current, startNode,graphViewInterface) }
+            topsort: (startNode) => { startTopSort(data.current, startNode, graphViewInterface) }
         }
         props.getInterfaceObject(interfaceObj.current)
 
@@ -33,7 +45,7 @@ export default function Graph(props) {
     }
 
 
-    let style = {
+    let style = props.style || {
         width: "100%",
         height: "100%"
     }
@@ -48,6 +60,9 @@ export default function Graph(props) {
             selector: 'node',
             style: {
                 content: 'data(id)',
+                "background-color": "white",
+                "border-color": "black",
+                'border-width': 2,
                 "text-valign": "center",
                 "text-halign": "center"
             }
@@ -55,14 +70,15 @@ export default function Graph(props) {
         {
             selector: 'edge',
             style: {
-                'curve-style': 'bezier',
-                'target-arrow-shape': 'triangle'
+                'line-color': "lightblue",
+                'target-arrow-shape': 'triangle',
+                'curve-style': 'bezier'
             }
         },
         {
             selector: '.selectedEdge',
             style: {
-                'line-color': "blue",
+                'line-color': "black",
             }
         },
         {
@@ -74,19 +90,32 @@ export default function Graph(props) {
         {
             selector: '.path',
             style: {
-                'background-color': "orange",
+                'border-color': "orange",
+                'border-width': 3,
             }
         },
         {
             selector: '.selected',
             style: {
-                'background-color': "blue",
+                'border-color': "black",
+                'border-style': 'double',
+                'background-color': "black",
+                'color': "white",
+                'border-width': 4,
             }
         },
         {
             selector: '.finished',
             style: {
-                'background-color': "green",
+                'background-color': "#AFE1AF",
+                'border-width': 2,
+            }
+        },
+        {
+            selector: '.cycle',
+            style: {
+                'color': 'white',
+                'background-color': "#880808",
             }
         }]
 
@@ -95,8 +124,9 @@ export default function Graph(props) {
         style={style}
         layout={layout}
         getInterfaceObject={(obj) => { graphViewInterface.current = obj; initializeInterfaceObject() }}
-        visualizationSpeed={0.5}
-        actionHandler={actionHandler} />;
+        visualizationDuration={props.visualizationDuration}
+        actionHandler={actionHandler} 
+        actionHandlerArgs={{ onNewTraversedArray: props.onNewTraversedArray }}/>;
 }
 
 
@@ -136,7 +166,7 @@ function generateGraph(countOfNodes, countOfConnections) {
     return { nodes, edges }
 }
 
-async function startTopSort(graph, startNode,controlObj) {
+async function startTopSort(graph, startNode, controlObj) {
     let data = await topsort(graph.edges, startNode)
     controlObj.current?.addActions(data)
 }
@@ -146,7 +176,7 @@ async function startTopSort(graph, startNode,controlObj) {
 
 async function actionHandler({ action, ...props }) {
     let actionType = action.action
-    let visualizationSpeed = props.visualizationSpeed
+    let visualizationDuration = props.getVisualizationDuration?.()
 
     let cy = props.getCy()
     if (actionType === "step") {
@@ -157,8 +187,10 @@ async function actionHandler({ action, ...props }) {
             traversed: action.traversed,
         }
 
+        props.onNewTraversedArray?.(action.traversed)
+
         assignClassToNodes(nodeClasses, cy)
-        if (!action.handled) await delay(visualizationSpeed * 500)
+        if (!action.handled) await delay(visualizationDuration * 1000)
     }
 
     if (actionType === "set") {
@@ -170,11 +202,16 @@ async function actionHandler({ action, ...props }) {
         for (let cyNode of cy.elements()) {
             cyNode.addClass("finished")
         }
-        if (!action.handled) await delay(visualizationSpeed * 1000)
+        if (!action.handled) await delay(visualizationDuration * 1000)
     }
 
-    if (actionType === "error") {
-        console.log(action.message)
+    if (actionType === "found_cycle") {
+        clearAllClasses(cy)
+        for (let pathNode of action.traverse_stack) {
+            let cyNode = cy.getElementById(pathNode)
+            cyNode.addClass("cycle")
+        }
+        props.onNewTraversedArray?.(`Graph is not acyclic. Cycle ${action.traverse_stack} was found`)
     }
 
     action.handled = true

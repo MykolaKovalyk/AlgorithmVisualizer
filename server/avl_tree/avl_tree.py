@@ -156,7 +156,7 @@ class AVLTree:
         while current_node is not NULL and key != current_node.key:
             
             # notify about search
-            self._logger.mark_nodes([current_node.key], "search", f"Searching for node {key}...")
+            self._logger.mark_nodes([current_node.key], "search", f"Searching for node {key} at {current_node.key}...")
 
             right_node = hash(key) > hash(current_node.key)
             current_node = current_node.right if right_node else current_node.left
@@ -180,7 +180,7 @@ class AVLTree:
         while current_node is not NULL and key != current_node.key:
 
             # notify about search
-            self._logger.mark_nodes([current_node.key], "search", f"Searching for node {key}...")
+            self._logger.mark_nodes([current_node.key], "search", f"Searching for node {key} at {current_node.key}...")
 
             node_parent = current_node
             right_node = hash(key) > hash(current_node.key)
@@ -215,7 +215,7 @@ class AVLTree:
             self._size += 1
 
             # new node was created, notify about it
-            self._logger.new_state()
+            self._logger.refresh_state()
             self._logger.mark_nodes([current_node.key], "new_node", f"Node {key} was created!")
 
             self._fixup(current_node.parent)
@@ -244,6 +244,9 @@ class AVLTree:
             replacement = self._find_the_smallest_node_in_the_branch(node_to_replace.right)
         elif node_to_replace.left is not NULL:
             replacement = self._find_the_biggest_node_in_the_branch(node_to_replace.left)
+        
+        if node_to_replace is replacement:
+            return node_to_replace
 
         # log node replacement
         self._logger.mark_nodes([node_to_replace.key, replacement.key], "replacement", f"Node {node_to_replace.key} is replaced by {replacement.key}...")
@@ -252,7 +255,7 @@ class AVLTree:
         node_to_replace.value, replacement.value = replacement.value, node_to_replace.value
 
         # log new tree with replaced node
-        self._logger.new_state()
+        self._logger.refresh_state()
 
         return replacement
 
@@ -274,7 +277,7 @@ class AVLTree:
 
         # log node replacement
         self._logger.mark_nodes([node_to_prune.key], "removal", f"Node {node_to_prune.key} can be safely removed")
-        self._logger.new_state()
+        self._logger.refresh_state()
 
 
 
@@ -315,12 +318,17 @@ class AVLTree:
         
         while node is not NULL:
 
-            # notify which node the search is finished at
-            self._logger.mark_nodes([node.key], "fixup", f"Checking if node {node.key} needs fixing...")
-
             node.height = 1 + max(node.left.height, node.right.height)
 
             balanceFactor = node.get_balance()
+
+            # notify which node the search is finished at
+            if(abs(balanceFactor) > 1):
+                self._logger.mark_nodes([node.key], "fixup", f"Balance factor: {balanceFactor}, Node {node.key} needs fixing!")
+            else:
+                self._logger.mark_nodes([node.key], "fixup_traversal", f"Balance factor: {balanceFactor}, Node {node.key} doesn't need fixing. Next...")
+
+
 
             if balanceFactor > 1:
                 if node.left.get_balance() < 0:
@@ -332,8 +340,8 @@ class AVLTree:
                     self._right_rotate(node.right)
                 
                 node = self._left_rotate(node)
-            else:
-                node = node.parent
+            
+            node = node.parent
 
 
 
@@ -381,7 +389,7 @@ class AVLTree:
 
         # log the rotation
         self._logger.mark_nodes([node.key], "rotation", f"Rotate {node.key} left...")
-        self._logger.new_state()
+        self._logger.refresh_state()
         
         return right_node
 
@@ -430,7 +438,7 @@ class AVLTree:
 
         # log the rotation
         self._logger.mark_nodes([node.key], "rotation", f"Rotate {node.key} right...")
-        self._logger.new_state()
+        self._logger.refresh_state()
         
         return left_node
 
@@ -438,10 +446,10 @@ class AVLTree:
 
         current_node = node
         while current_node.left is not NULL:
-            self._logger.mark_nodes([current_node.key], "search", "Searching for the smallest node in the branch...")
+            self._logger.mark_nodes([current_node.key], "search", f"Searching for the smallest node in the branch, currently at {current_node.key}...")
             current_node = current_node.left
 
-        self._logger.mark_nodes([current_node.key], "found", "Smallest node found!")
+        self._logger.mark_nodes([current_node.key], "found", f"Smallest node in the branch is {current_node.key}!")
 
         return current_node
 
@@ -449,10 +457,10 @@ class AVLTree:
 
         current_node = node
         while current_node.right is not NULL:
-            self._logger.mark_nodes([current_node.key], "search", "Searching for the biggest node in the branch...")
+            self._logger.mark_nodes([current_node.key], "search", f"Searching for the biggest node in branch, currently at {current_node.key}...")
             current_node = current_node.right
         
-        self._logger.mark_nodes([current_node.key], "found", "Biggest node found!")
+        self._logger.mark_nodes([current_node.key], "found", f"Biggest node in the branch is {current_node.key}!")
 
         return current_node
 
@@ -472,7 +480,7 @@ class ActionLogger:
         self._action_list.append(action)
 
     def final_tree(self):
-        self.add({"action": "final_tree", "tree": self.tree.to_json() })
+        self.add({"action": "final_tree", "message": "Done!" })
 
 
     def mark_nodes(self, nodes, reason, message=None):
@@ -484,10 +492,10 @@ class ActionLogger:
                     "message": message
             })
     
-    def new_state(self):
+    def refresh_state(self):
         self.add(
             {
-                    "action": "new_state",
+                    "action": "refresh_state",
                     "tree": self.tree.to_json()
             })
 

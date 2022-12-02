@@ -12,11 +12,8 @@ cytoscape.use(dagre);
 export default function AVLTree(props) {
 
     const identifier = 15
-    const visualizationSpeed = 0.25
     const graphViewInterface = useRef()
     const interfaceObj = useRef()
-    const data = useRef()
-
 
     const initializeInterfaceObject = async () => {
         interfaceObj.current = {
@@ -24,6 +21,7 @@ export default function AVLTree(props) {
             resume: graphViewInterface.current.resumeHandler,
             stepBack: graphViewInterface.current.stepBack,
             stepForward: graphViewInterface.current.stepForward,
+            isPaused: () => graphViewInterface.current.getHandler().paused,
             insert: async (node) => {
                 let data = await avlInsert({ identifier: identifier, key: node })
                 graphViewInterface.current.addActions(data)
@@ -38,12 +36,13 @@ export default function AVLTree(props) {
             },
             clear: async () => {
                 await avlClear(identifier)
+                graphViewInterface.current.reset()
                 graphViewInterface.current.addActions([{ action: "set", tree: [] }])
             },
-            test: async () => {
+            test: async (numberAdded, numberRemoved) => {
                 let newNodes = []
 
-                for (let i = 0; i < 15; i++) {
+                for (let i = 0; i < numberAdded; i++) {
                     newNodes.push(i)
                 }
 
@@ -54,16 +53,16 @@ export default function AVLTree(props) {
                     graphViewInterface.current.addActions(data)
                 }
 
-                newNodes = newNodes.filter(() => Math.random() > 0.5)
+                newNodes.sort(() => Math.random() - 0.5)
 
-                for (let newNode of newNodes) {
-                    let data = await avlRemove({ identifier: identifier, key: newNode })
+                for (let i = 0; i < numberRemoved; i++) {
+                    let data = await avlRemove({ identifier: identifier, key: newNodes[i] })
                     graphViewInterface.current.addActions(data)
                 }
             }
         }
         props.getInterfaceObject(interfaceObj.current)
-        graphViewInterface.current.addActions([{action: "set", tree: await getTree(identifier)}])
+        graphViewInterface.current.addActions([{ action: "set", tree: await getTree(identifier) }])
 
         graphViewInterface.current.getCy().nodes().ungrabify()
 
@@ -71,8 +70,7 @@ export default function AVLTree(props) {
     }
 
 
-
-    let style = {
+    let style = props.style || {
         width: "100%",
         height: "100%"
     }
@@ -80,7 +78,7 @@ export default function AVLTree(props) {
     let layout = {
         name: "dagre",
         animate: true,
-        animationDuration: visualizationSpeed * 750
+        animationDuration: props.visualizationDuration * 750
     }
 
     let stylesheet = [
@@ -88,6 +86,9 @@ export default function AVLTree(props) {
             selector: 'node',
             style: {
                 content: 'data(id)',
+                "background-color": "white",
+                "border-color": "black",
+                'border-width': 2,
                 "text-valign": "center",
                 "text-halign": "center"
             }
@@ -95,92 +96,118 @@ export default function AVLTree(props) {
         {
             selector: 'edge',
             style: {
-            }
-        },
-        {
-            selector: '.removal',
-            style: {
-                'background-color': "red",
+                'line-color': "lightblue",
             }
         },
         {
             selector: '.new_node',
             style: {
-                'background-color': "green",
+                'background-color': "#2AAA8A",
             }
         },
         {
-            selector: '.found',
+            selector: '.removal',
             style: {
-                'background-color': "green",
-            }
-        },
-        {
-            selector: '.rotation',
-            style: {
-                'background-color': "orange",
-            }
-        },
-        {
-            selector: '.fixup',
-            style: {
-                'background-color': "purple",
-            }
-        },
-        {
-            selector: '.replacement',
-            style: {
-                'background-color': "orange",
+                'color': 'white',
+                'background-color': "#880808",
             }
         },
         {
             selector: '.search',
             style: {
-                'background-color': "yellow",
+                'border-color': "black",
+                'background-color': "black",
+                'color': "white",
+                'border-width': 3,
+            }
+        },
+        {
+            selector: '.found',
+            style: {
+                'background-color': "#AFE1AF",
+                'border-width': 2,
+            }
+        },
+        {
+            selector: '.rotation',
+            style: {
+                'border-color': "orange",
+                'border-width': 2,
+            }
+        },
+        {
+            selector: '.replacement',
+            style: {
+                'border-color': "orange",
+                'border-width': 3,
+            }
+        },
+        {
+            selector: '.fixup_traversal',
+            style: {
+                'border-color': "black",
+                'border-style': 'double',
+                'background-color': "black",
+                'color': "white",
+                'border-width': 4,
+            }
+        },
+        {
+            selector: '.fixup',
+            style: {
+                'border-color': "orange",
+                'border-style': 'double',
+                'background-color': "black",
+                'color': "white",
+                'border-width': 4,
             }
         }]
-
 
     return <GraphView
         stylesheet={stylesheet}
         style={style}
         layout={layout}
         getInterfaceObject={(obj) => { graphViewInterface.current = obj; initializeInterfaceObject() }}
-        visualizationSpeed={visualizationSpeed}
-        actionHandler={actionHandler} />;
+        visualizationDuration={props.visualizationDuration}
+        actionHandler={actionHandler}
+        actionHandlerArgs={{ onMessage: props.onMessage }} />;
 }
 
 
 
 async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {
     let actionType = action.action
-    let visualizationSpeed = props.visualizationSpeed
+    let visualizationDuration = props.getVisualizationDuration?.()
 
-    if(action.old_tree) {
+
+    if (action.old_tree) {
         setGraph(action.old_tree)
     }
     action.old_tree = getGraph()
 
-    console.log(action)
+    if (action.message) {
+        props.onMessage?.(action.message)
+    }
 
     let cy = getCy()
 
     if (actionType === "mark_nodes") {
         assignClassToNodes(action.nodes, action.reason, cy)
-        if (!action.handled && visualizationSpeed) 
-            await delay(visualizationSpeed * 500)
+        if (!action.handled && visualizationDuration)
+            await delay(visualizationDuration * 500)
     }
 
-    if (actionType === "new_state") {
+
+    if (actionType === "refresh_state") {
         setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        if (!action.handled && visualizationSpeed) 
-            await delay(visualizationSpeed * 1000)
+        if (!action.handled && visualizationDuration)
+            await delay(visualizationDuration * 1000)
     }
 
     if (actionType === "final_tree") {
         clearAllClasses(cy)
-        if (action.handled && visualizationSpeed) 
-            await delay(visualizationSpeed * 1000)
+        if (action.handled && visualizationDuration)
+            await delay(visualizationDuration * 1000)
     }
 
     if (actionType === "set") {
@@ -215,7 +242,7 @@ function convertTreeToCytoscapeElements(tree, cy) {
 
 function assignClassToNodes(nodesWithClass, classes, cy) {
     clearAllClasses(cy)
-    
+
     let elements = []
     for (const node of nodesWithClass) {
         const cyNode = cy.getElementById(node)
