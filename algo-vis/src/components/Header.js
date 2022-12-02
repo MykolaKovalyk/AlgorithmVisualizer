@@ -1,6 +1,4 @@
-import { useRef } from "react"
 import styles from "./Header.module.css"
-import Modal from "./Modal"
 import NavLink from "./NavLink"
 
 

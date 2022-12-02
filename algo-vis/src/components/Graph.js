@@ -1,17 +1,17 @@
-import { useRef } from "react";
-import cytoscape from "cytoscape";
+import { useRef } from "react"
+import cytoscape from "cytoscape"
 import fcose from "cytoscape-fcose"
-import { topsort } from "../requests";
-import GraphView from "./GraphView";
+import { topsort } from "../requests"
+import GraphView from "./GraphView"
 
-cytoscape.use(fcose);
+cytoscape.use(fcose)
 
 
 export default function Graph(props) {
 
     const graphViewInterface = useRef()
     const interfaceObj = useRef()
-    const data = useRef({})
+    const data = useRef({ nodes: [], edges: [] })
 
     const initializeInterfaceObject = () => {
         interfaceObj.current = {
@@ -41,7 +41,7 @@ export default function Graph(props) {
             generateGraph: (countOfNodes, minCountOfEdges, maxCountOfEdges) => {
                 data.current = generateGraph(countOfNodes, minCountOfEdges, maxCountOfEdges)
                 graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
-                return data.current;
+                return data.current
             },
             topsort: (startNode) => { topologicalSort(data.current, startNode, graphViewInterface) }
         }
@@ -131,10 +131,13 @@ export default function Graph(props) {
         stylesheet={stylesheet}
         style={style}
         layout={layout}
-        getInterfaceObject={(obj) => { graphViewInterface.current = obj; initializeInterfaceObject() }}
+        getInterfaceObject={(obj) => {
+            graphViewInterface.current = obj
+            initializeInterfaceObject()
+        }}
         visualizationDuration={props.visualizationDuration}
         actionHandler={actionHandler}
-        actionHandlerArgs={{ onMessage: props.onMessage }} />;
+        actionHandlerArgs={{ onMessage: props.onMessage }} />
 }
 
 
@@ -159,14 +162,13 @@ function generateGraph(countOfNodes, minCountOfEdgesPerNode, maxCountOfEdgesPerN
     }
 
     let edges = []
-    console.log(nodes)
 
     for (let sourceNodeIndex = 0; sourceNodeIndex < nodes.length; sourceNodeIndex++) {
         let countOfEdges = Math.min(
             minCountOfEdgesPerNode + Math.floor(Math.random() * (maxCountOfEdgesPerNode - minCountOfEdgesPerNode)),
             nodes.length - sourceNodeIndex - 1
         )
-        console.log(countOfEdges, sourceNodeIndex)
+
         for (let i = 0; i < countOfEdges; i++) {
 
             let newEdge = null
@@ -256,7 +258,7 @@ function toCytoscapeElements(graph, cy) {
         }
     }
 
-    return elements;
+    return elements
 }
 
 function assignClassToNodes(nodeClasses, cy) {
@@ -293,5 +295,5 @@ function clearAllClasses(cy) {
 
 
 function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms))
 }

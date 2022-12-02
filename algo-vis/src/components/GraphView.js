@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import useStateRef from "react-usestateref"
 import cytoscape from "cytoscape";
 import EventHandler from "./utilities/EventHandler";

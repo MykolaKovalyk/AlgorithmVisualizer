@@ -11,14 +11,18 @@ const DEFAULT_ANIMATION_DURATION_FACTOR = 0.5
 
 export default function AVLPage() {
 
-    const onViewClearedCbck = useRef()
     const treeInterface = useRef()
+
     const messageLabel = useRef()
+
+    const onViewClearedCbck = useRef()
+
     const input = useRef()
     const animationIntervalinput = useRef()
     const testAddItemsInput = useRef()
     const testRemoveItemsInput = useRef()
-    const advancedOptionsVisible = useRef()
+
+    const advancedOptionsPanelInterface = useRef()
 
     const [intervalBetweenAnimations, setInterval] = useState(DEFAULT_ANIMATION_DURATION_FACTOR)
 
@@ -77,14 +81,15 @@ export default function AVLPage() {
             <Button className={styles.clear_button} onClick={() => {
                 onViewClearedCbck.current?.()
                 treeInterface.current.clear()
-            }}>clear</Button>
+            }}>
+                clear
+            </Button>
 
-            <Button className={styles.show_advanced_button} onClick={() => advancedOptionsVisible.current.setVisible(true)}>show advaned</Button>
+            <Button className={styles.show_advanced_button} onClick={() => advancedOptionsPanelInterface.current.setVisible(true)}>show advaned</Button>
         </div>
         <Modal
             className={styles.advanced_modal}
-            setCallbacks={(setVisible, getVisible) => advancedOptionsVisible.current = { setVisible, getVisible }}
-        >
+            setCallbacks={(setVisible, getVisible) => advancedOptionsPanelInterface.current = { setVisible, getVisible }}>
             <div className={styles.modal_container}>
                 <div className={styles.modal_text_container}>
                     Slow down by
@@ -114,10 +119,10 @@ export default function AVLPage() {
                     if (addedCount < removedCount) return;
 
                     treeInterface.current.test(addedCount, removedCount)
-                    advancedOptionsVisible.current.setVisible(false)
+                    advancedOptionsPanelInterface.current.setVisible(false)
                 }}>start testing</Button>
             </div>
-            <Button className={styles.close_modal_button} onClick={() => advancedOptionsVisible.current.setVisible(false)}>close</Button>
+            <Button className={styles.close_modal_button} onClick={() => advancedOptionsPanelInterface.current.setVisible(false)}>close</Button>
         </Modal>
     </div>
 }
