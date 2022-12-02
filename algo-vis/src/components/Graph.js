@@ -78,7 +78,8 @@ export default function Graph(props) {
             selector: 'edge',
             style: {
                 'line-color': "lightblue",
-                'target-arrow-shape': 'triangle',
+                'target-arrow-color': 'black',
+                'target-arrow-shape': 'chevron',
                 'curve-style': 'bezier'
             }
         },
