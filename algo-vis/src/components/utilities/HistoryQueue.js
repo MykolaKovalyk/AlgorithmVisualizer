@@ -28,7 +28,7 @@ export default class Queue {
     }
 
     dequeue() {
-        if(this.length == 0) return undefined
+        if(this.length === 0) return undefined
 
         const item = this.head
         this.head = this.head.next

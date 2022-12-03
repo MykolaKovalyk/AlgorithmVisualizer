@@ -135,7 +135,7 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
                 Choose the starting node:
             </div>
             <input className={styles.number_input} type="number" ref={startNodeInput} />
-            <Button className={styles.modal_button} onClick={start}>
+            <Button className={styles.modal_button} onClick={startTopsort}>
                 start
             </Button>
         </div>
@@ -147,7 +147,7 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
         getInterface?.(modalInterface.current)
     }
 
-    function start() {
+    function startTopsort() {
         let startNode = parseInt(startNodeInput.current.value)
 
         if (isNaN(startNode)) {

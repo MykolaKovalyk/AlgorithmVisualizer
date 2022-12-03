@@ -15,11 +15,14 @@ export default function FlowControlPanel({
 
     let [paused, setPaused] = useState(false)
 
-    useEffect(() => {
+    // empty array is intentional, i need this to run once
+    /* eslint-disable react-hooks/exhaustive-deps */
+    useEffect(() =>
         getInterface?.({
             setPaused: setPaused
-        })
-    }, [])
+        }), [])
+    /* eslint-enable react-hooks/exhaustive-deps */
+
 
     return <div className={styles.control_panel} {...props}>
         <button className={styles.back_button} type="button" onClick={

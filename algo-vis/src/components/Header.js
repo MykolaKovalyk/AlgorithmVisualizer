@@ -4,7 +4,6 @@ import NavLink from "./basic/NavLink"
 
 
 export default function Header(props) {
-
     return <div className={styles.header}>
         <div style={{ display: "flex", alignItems: "center" }}>
             <h5 style={

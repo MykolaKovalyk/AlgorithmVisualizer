@@ -42,4 +42,62 @@ If the browser did not open, check [http://localhost:3000](http://localhost:3000
 
 ## Conventions
 
-Variables, functions and class methods are named by `cammelCase` convention, classes are named by `PascalCase`, and constants are all in `MACRO_CASE`. To be continued after refactoring...
+Variables, functions and class methods are named by `cammelCase` convention, classes and react functional components are named by `PascalCase`, and constants are all in `MACRO_CASE`. Each react component has destructured mandatory parameters. Effort is made to make components not too big - react component, if too large, is divided into several subcomponents. JSX tags are kept short - if attribute list for a tag is too long, it is broken apart into several lines, lambdas in cllback attribute parameters line `onClick` are not used.
+
+Parent -> child interaction is provided by using props callback pattern: every child that exposes it's functionality to the parent has `getInterface` attribute. The child calls this method providing a param `interfaceObj`, representing an object with exposed child's functionality. Parent can provide callback to `getInterface` attribute, and assign `interfaceObj` to its own ref or state variables. This way to handle parent -> child interaction is a persistent pattern throughout the project.
+
+General layout of the react component file in the project looks like this:
+
+```JavaScript
+import SomeComponent from "./some/local/File"
+import someConfigMethod from "some-module"
+import { useRef, useState, useSomeHook, SomeOtherComponent } from "react"
+import useStateRef from "react-usestateref"
+
+
+const SOME_CONSTANT =  "this is a constant"
+
+someConfigMethod()
+
+
+export default function MainComponent({ mandatoryParam1, mandatoryParam2, ...props }) {
+     const someRef = useRef("default value")
+    const someOtherRef = useRef(false)
+
+    const [someVar, setSomeVar] = useState("default value")
+    const [someOtherVar, setSomeOtherVar, someOtherVarRef] = useStateRef()
+
+
+    useEffect(() => {
+        /* code here */
+    }, [mandatoryParam1])
+
+
+    /* config code */
+
+
+    return <some_tag> 
+        /* jsx code here */
+    </some_tag>
+
+
+    function innerFunction(...params) {
+        /* some code */
+    }
+}
+
+
+function SubComponent({ mandatoryParam1, mandatoryParam2, ...props }) {
+    /* ... */
+}
+
+function OtherSubComponent({ mandatoryParam1, mandatoryParam2, ...props }) {
+    /* ... */
+}
+
+
+function SomeBigImportantFunction(...params) {
+    /* ... */
+}
+
+```

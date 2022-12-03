@@ -4,6 +4,7 @@ import fcose from "cytoscape-fcose"
 import { topsort } from "../requests"
 import GraphView from "./GraphView"
 
+
 cytoscape.use(fcose)
 
 

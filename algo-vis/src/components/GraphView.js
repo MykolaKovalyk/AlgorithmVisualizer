@@ -5,7 +5,9 @@ import EventHandler from "./utilities/EventHandler";
 import CytoscapeComponent from "react-cytoscapejs";
 import fcose from "cytoscape-fcose"
 
+
 cytoscape.use(fcose);
+
 
 export default function GraphView({ getInterface, visualizationDuration, actionHandler, actionHandlerArgs, ...props }) {
 
@@ -18,6 +20,8 @@ export default function GraphView({ getInterface, visualizationDuration, actionH
 
     animationStepDuration.current = visualizationDuration
 
+    // empty array is intentional, i need this to run once
+    /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
         eventHandler.current = new EventHandler(handleAction)
 
@@ -39,13 +43,16 @@ export default function GraphView({ getInterface, visualizationDuration, actionH
         getInterface(thisInterface.current)
         return () => eventHandler.current.stop()
     }, [])
+    /* eslint-enable react-hooks/exhaustive-deps */
 
+
+    const graphStringified = JSON.stringify(graph)
     useEffect(() => {
         if (!props.layout) return;
 
         let layoutObject = cy?.elements().makeLayout(props.layout);
         layoutObject?.run()
-    }, [JSON.stringify(graph)])
+    }, [graphStringified, cy, props.layout])
 
 
     return <CytoscapeComponent

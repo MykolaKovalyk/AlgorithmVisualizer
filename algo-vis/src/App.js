@@ -5,26 +5,21 @@ import TopsortPage from './pages/TopsortPage';
 import Header from './components/Header';
 
 
-function App() {
-
-  return (
-    <div className={styles.app}>
-      <Header />
-      <div className={styles.app_content}>
-        <Routes>
-          <Route path="/" element={
-            <Navigate to="/avl-tree" />
-          } />
-          <Route path="/topological-sort" element={
-            <TopsortPage />
-          } />
-          <Route path="/avl-tree" element={
-            <AVLPage />
-          } />
-        </Routes>
-      </div>
+export default function App() {
+  return <div className={styles.app}>
+    <Header />
+    <div className={styles.app_content}>
+      <Routes>
+        <Route path="/" element={
+          <Navigate to="/avl-tree" />
+        } />
+        <Route path="/topological-sort" element={
+          <TopsortPage />
+        } />
+        <Route path="/avl-tree" element={
+          <AVLPage />
+        } />
+      </Routes>
     </div>
-  );
+  </div>
 }
-
-export default App;

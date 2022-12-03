@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import useStateRef from "react-usestateref"
 import styles from "./Table.module.css"
-
 
 
 export default function Table({ getInterface, ...props }) {
@@ -14,15 +13,17 @@ export default function Table({ getInterface, ...props }) {
         position: null
     })
 
-    useEffect(() => {
+    // empty array is intentional, i need this to run once
+    /* eslint-disable react-hooks/exhaustive-deps */
+    useEffect(() =>
         getInterface?.({
             setData: (data) => {
                 table.current = data;
                 setUpdate(!updateRef.current)
             },
             getData: () => table.current
-        })
-    }, [])
+        }), [])
+    /* eslint-enable react-hooks/exhaustive-deps */
 
 
     return <table ref={tableRef} {...props}>
@@ -45,27 +46,21 @@ export default function Table({ getInterface, ...props }) {
 
         focus.current.entry = null
         focus.current.item = null
+        
         let source = parseInt(data.source.value);
         if (isNaN(source)) {
             source = null
         }
 
-
         let target = parseInt(data.target.value)
         if (isNaN(target)) {
             target = null
-
         }
-
 
         table.current[key] = [
             source,
             target
         ]
-
-
-        console.log(table.current[key])
-
 
         setUpdate(!update)
     }
@@ -73,7 +68,6 @@ export default function Table({ getInterface, ...props }) {
     function addOrRemoveEntry(event, key, data) {
         if (event.key === "Enter") {
             let splitIndex = event.target.selectionEnd
-
 
             table.current.splice(key, 0, [null, null]);
             if (event.target === data.source) {
@@ -134,21 +128,21 @@ export default function Table({ getInterface, ...props }) {
 
             setUpdate(!update)
         } else if (event.key === "ArrowDown") {
-            if(focus.current.entry === table.current.length - 1) return
+            if (focus.current.entry === table.current.length - 1) return
 
             focus.current.entry = key + 1
             focus.current.item = event.target === data.source ? 0 : 1
             setUpdate(!update)
         } else if (event.key === "ArrowUp") {
-            if(focus.current.entry === 0) return
+            if (focus.current.entry === 0) return
 
             focus.current.entry = key - 1
             focus.current.item = event.target === data.source ? 0 : 1
             setUpdate(!update)
         } else if (event.key === "ArrowLeft") {
-            if(focus.current.entry === 0 && focus.current.item === 0) return
+            if (focus.current.entry === 0 && focus.current.item === 0) return
 
-            if(focus.current.item === 1) {
+            if (focus.current.item === 1) {
                 focus.current.item = 0
             } else {
                 focus.current.entry = key - 1
@@ -157,9 +151,9 @@ export default function Table({ getInterface, ...props }) {
 
             setUpdate(!update)
         } else if (event.key === "ArrowRight") {
-            if(focus.current.entry === table.current.length - 1 && focus.current.item === 1) return
+            if (focus.current.entry === table.current.length - 1 && focus.current.item === 1) return
 
-            if(focus.current.item === 0) {
+            if (focus.current.item === 0) {
                 focus.current.item = 1
             } else {
                 focus.current.entry = key + 1
@@ -182,7 +176,7 @@ export function TableItem({ data, yIndex, modifyTableEntry, addOrRemoveEntry, fo
         sourceInput.current.value = data.source
         targetInput.current.value = data.target
         if (focus.current.entry === yIndex) {
-            if(focus.current.item === 0) {
+            if (focus.current.item === 0) {
                 sourceInput.selectionEnd = focus.current.position
                 sourceInput.current.focus()
             } else {
