@@ -15,57 +15,6 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
     const graphViewInterface = useRef()
     const thisInterface = useRef()
 
-    const initializeInterfaceObject = async () => {
-        thisInterface.current = {
-            pause: graphViewInterface.current.pauseHandler,
-            resume: graphViewInterface.current.resumeHandler,
-            stepBack: graphViewInterface.current.stepBack,
-            stepForward: graphViewInterface.current.stepForward,
-            isPaused: () => graphViewInterface.current.getHandler().paused,
-            insert: async (node) => {
-                let data = await avlInsert({ identifier: identifier, key: node })
-                graphViewInterface.current.addActions(data)
-            },
-            remove: async (node) => {
-                let data = await avlRemove({ identifier: identifier, key: node })
-                graphViewInterface.current.addActions(data)
-            },
-            find: async (node) => {
-                let data = await avlGetItem(identifier, node)
-                graphViewInterface.current.addActions(data)
-            },
-            clear: async () => {
-                await avlClear(identifier)
-                graphViewInterface.current.reset()
-                graphViewInterface.current.addActions([{ type: "set", tree: [] }])
-            },
-            test: async (numberAdded, numberRemoved) => {
-                let newNodes = []
-                for (let i = 0; i < numberAdded; i++) {
-                    newNodes.push(i)
-                }
-
-                newNodes.sort(() => Math.random() - 0.5)
-                for (let newNode of newNodes) {
-                    let data = await avlInsert({ identifier: identifier, key: newNode })
-                    graphViewInterface.current.addActions(data)
-                }
-
-                newNodes.sort(() => Math.random() - 0.5)
-                for (let i = 0; i < numberRemoved; i++) {
-                    let data = await avlRemove({ identifier: identifier, key: newNodes[i] })
-                    graphViewInterface.current.addActions(data)
-                }
-            }
-        }
-        getInterface(thisInterface.current)
-        graphViewInterface.current.addActions([{ type: "set", tree: await getTree(identifier) }])
-
-        graphViewInterface.current.getCy().nodes().ungrabify()
-
-        return thisInterface.current
-    }
-
 
     let viewportStyle = style || {
         width: "100%",
@@ -160,6 +109,7 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
             }
         }]
 
+
     return <GraphView
         stylesheet={stylesheet}
         style={viewportStyle}
@@ -168,8 +118,60 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
         visualizationDuration={visualizationDuration}
         actionHandler={actionHandler}
         actionHandlerArgs={{ onMessage: props.onMessage }} />;
-}
 
+
+    async function initializeInterfaceObject() {
+        thisInterface.current = {
+            pause: graphViewInterface.current.pauseHandler,
+            resume: graphViewInterface.current.resumeHandler,
+            stepBack: graphViewInterface.current.stepBack,
+            stepForward: graphViewInterface.current.stepForward,
+            isPaused: () => graphViewInterface.current.getHandler().paused,
+            insert: async (node) => {
+                let data = await avlInsert({ identifier: identifier, key: node })
+                graphViewInterface.current.addActions(data)
+            },
+            remove: async (node) => {
+                let data = await avlRemove({ identifier: identifier, key: node })
+                graphViewInterface.current.addActions(data)
+            },
+            find: async (node) => {
+                let data = await avlGetItem(identifier, node)
+                graphViewInterface.current.addActions(data)
+            },
+            clear: async () => {
+                await avlClear(identifier)
+                graphViewInterface.current.reset()
+                graphViewInterface.current.addActions([{ type: "set", tree: [] }])
+            },
+            test: async (numberAdded, numberRemoved) => {
+                let newNodes = []
+                for (let i = 0; i < numberAdded; i++) {
+                    newNodes.push(i)
+                }
+
+                newNodes.sort(() => Math.random() - 0.5)
+                for (let newNode of newNodes) {
+                    let data = await avlInsert({ identifier: identifier, key: newNode })
+                    graphViewInterface.current.addActions(data)
+                }
+
+                newNodes.sort(() => Math.random() - 0.5)
+                for (let i = 0; i < numberRemoved; i++) {
+                    let data = await avlRemove({ identifier: identifier, key: newNodes[i] })
+                    graphViewInterface.current.addActions(data)
+                }
+            }
+        }
+        getInterface(thisInterface.current)
+
+        graphViewInterface.current.addActions([{ type: "set", tree: await getTree(identifier) }])
+
+        graphViewInterface.current.getCy().nodes().ungrabify()
+
+        return thisInterface.current
+    }
+}
 
 
 async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {

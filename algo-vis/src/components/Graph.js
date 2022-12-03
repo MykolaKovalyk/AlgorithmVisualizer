@@ -6,6 +6,9 @@ import GraphView from "./GraphView"
 import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
 
 
+const MAX_COUNT_OF_NODES = 15
+const MAX_COUNT_OF_EDGES_PER_NODE = 14
+
 cytoscape.use(fcose)
 
 
@@ -104,6 +107,7 @@ export default function Graph(props) {
         actionHandler={actionHandler}
         actionHandlerArgs={{ onMessage: props.onMessage }} />
 
+
     function initializeInterfaceObject() {
         thisInterface.current = {
             pause: graphViewInterface.current.pauseHandler,
@@ -126,11 +130,18 @@ export default function Graph(props) {
                         }
                     }
                 }
+
+                checkDataValidity(nodes, edges)
                 data.current = { nodes, edges }
+
                 graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
             },
             generateGraph: (countOfNodes, minCountOfEdges, maxCountOfEdges) => {
-                data.current = generateGraph(countOfNodes, minCountOfEdges, maxCountOfEdges)
+                let { nodes, edges } = generateGraph(countOfNodes, minCountOfEdges, maxCountOfEdges)
+
+                checkDataValidity(nodes, edges)
+                data.current = { nodes, edges }
+
                 graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
                 return data.current
             },
@@ -142,53 +153,81 @@ export default function Graph(props) {
 
         return thisInterface.current
     }
-}
+
+    function checkDataValidity(nodes, edges) {
+
+        if (nodes.length > MAX_COUNT_OF_NODES) {
+            throw new Error(`Count of nodes can't be greater than ${MAX_COUNT_OF_NODES}`)
+        }
+
+        let edgeCountPerNode = {}
 
 
-function generateGraph(countOfNodes, minCountOfEdgesPerNode, maxCountOfEdgesPerNode) {
-    let nodes = []
-    for (let i = 0; i < countOfNodes; i++) {
-        nodes.push(i)
-    }
+        for (let node of nodes) {
+            edgeCountPerNode[node] = 0
+        }
 
-    function includesEdge(arrayOfEdges, edge) {
-        if (!edge) return false
-
-        for (let edgeInArray of arrayOfEdges) {
-            if (edgeInArray[0] === edge[0] && edgeInArray[1] === edge[1]) {
-                return true
+        for (let node of nodes) {
+            for (let edge of edges) {
+                if (edge[0] === node) {
+                    edgeCountPerNode[edge[0]]++
+                } else if (edge[1] === node) {
+                    edgeCountPerNode[edge[1]]++
+                }
             }
         }
 
-        return false
-    }
-
-    let edges = []
-
-    for (let sourceNodeIndex = 0; sourceNodeIndex < nodes.length; sourceNodeIndex++) {
-        let countOfEdges = Math.min(
-            minCountOfEdgesPerNode + Math.floor(Math.random() * (maxCountOfEdgesPerNode - minCountOfEdgesPerNode)),
-            nodes.length - sourceNodeIndex - 1
-        )
-
-        for (let i = 0; i < countOfEdges; i++) {
-
-            let newEdge = null
-            do {
-                let targetNodeIndex = sourceNodeIndex + 1 + Math.floor(Math.random() * (nodes.length - sourceNodeIndex - 1))
-                newEdge = [nodes[sourceNodeIndex], nodes[targetNodeIndex]]
-            } while (includesEdge(edges, newEdge))
-            edges.push(newEdge)
+        for (let node in edgeCountPerNode) {
+            if (edgeCountPerNode[node] > MAX_COUNT_OF_EDGES_PER_NODE) {
+                throw new Error(`Count of edges per single node can't be greater than ${MAX_COUNT_OF_EDGES_PER_NODE}`)
+            }
         }
     }
 
-    return { nodes, edges }
-}
+    function generateGraph(countOfNodes, minCountOfEdgesPerNode, maxCountOfEdgesPerNode) {
+        let nodes = []
 
+        for (let i = 0; i < countOfNodes; i++) {
+            nodes.push(i)
+        }
 
-async function topologicalSort(graph, startNode, controlObj) {
-    let data = await topsort(graph.edges, startNode)
-    controlObj.current?.addActions(data)
+        function includesEdge(arrayOfEdges, edge) {
+            if (!edge) return false
+
+            for (let edgeInArray of arrayOfEdges) {
+                if (edgeInArray[0] === edge[0] && edgeInArray[1] === edge[1]) {
+                    return true
+                }
+            }
+
+            return false
+        }
+
+        let edges = []
+
+        for (let sourceNodeIndex = 0; sourceNodeIndex < nodes.length; sourceNodeIndex++) {
+            let countOfEdges = Math.min(
+                minCountOfEdgesPerNode + Math.floor(Math.random() * (maxCountOfEdgesPerNode - minCountOfEdgesPerNode)),
+                nodes.length - sourceNodeIndex - 1
+            )
+
+            for (let i = 0; i < countOfEdges; i++) {
+                let newEdge = null
+                do {
+                    let targetNodeIndex = sourceNodeIndex + 1 + Math.floor(Math.random() * (nodes.length - sourceNodeIndex - 1))
+                    newEdge = [nodes[sourceNodeIndex], nodes[targetNodeIndex]]
+                } while (includesEdge(edges, newEdge))
+                edges.push(newEdge)
+            }
+        }
+
+        return { nodes, edges }
+    }
+
+    async function topologicalSort(graph, startNode, controlObj) {
+        let data = await topsort(graph.edges, startNode)
+        controlObj.current?.addActions(data)
+    }
 }
 
 

@@ -8,9 +8,10 @@ import Modal from "../components/basic/Modal";
 
 
 const DEFAULT_ANIMATION_DURATION_FACTOR = 0.5
-const DEFAULT_COUNT_OF_GENERATED_NODES = 20
+const DEFAULT_COUNT_OF_GENERATED_NODES = 15
 const DEFAULT_COUNT_OF_MIN_EDGES_PER_GENERATED_NODE = 1
 const DEFAULT_COUNT_OF_MAX_EDGES_PER_GENERATED_NODE = 3
+
 
 export default function TopsortPage(props) {
     const graphInterface = useRef()
@@ -51,10 +52,9 @@ export default function TopsortPage(props) {
             flowControlInterface={flowControlInterface}
             setAnimationInterval={setInterval}
             graphInterface={graphInterface} />
-        
+
     </div>
 }
-
 
 
 function DataModificationPanel({ flowControlInterface, graphInterface, setAnimationInterval, ...props }) {
@@ -106,12 +106,11 @@ function DataModificationPanel({ flowControlInterface, graphInterface, setAnimat
 }
 
 
-
 function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimationInterval, getInterface, ...props }) {
     const modalInterface = useRef()
     const animationIntervalInput = useRef()
     const startNodeInput = useRef()
-    const startingNodeResponse = useRef()
+    const errorMessage = useRef()
 
 
     useEffect(() => {
@@ -131,9 +130,10 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
             <Button className={styles.modal_button} onClick={submitSpeedfactor}>
                 submit
             </Button>
-            <div className={styles.modal_text_container} ref={startingNodeResponse} >
+            <div className={styles.modal_text_container}>
                 Choose the starting node:
             </div>
+            <div className={styles.error_message} ref={errorMessage} />
             <input className={styles.number_input} type="number" ref={startNodeInput} />
             <Button className={styles.modal_button} onClick={startTopsort}>
                 start
@@ -141,6 +141,7 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
         </div>
         <Button className={styles.close_modal_button} onClick={() => modalInterface.current.setVisible(false)}>close</Button>
     </Modal>
+
 
     function getModalInterface(interfaceObj) {
         modalInterface.current = interfaceObj
@@ -151,14 +152,16 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
         let startNode = parseInt(startNodeInput.current.value)
 
         if (isNaN(startNode)) {
-            startingNodeResponse.current.innerHTML = "Error - incorrect format, should be a whole number."
+            errorMessage.current.innerHTML = "Error - incorrect format, should be a whole number"
             return
         }
 
         if (!graphInterface.current.getGraph()?.nodes.includes(startNode)) {
-            startingNodeResponse.current.innerHTML = "Error - specified node is not in the node list."
+            errorMessage.current.innerHTML = "Error - specified node is not in the node list"
             return
         }
+
+        errorMessage.current.innerHTML = ''
 
         graphInterface.current.topsort(startNode)
         modalInterface.current.setVisible(false)
@@ -172,13 +175,13 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
 }
 
 
-
 function GenerateGraphModal({ graphInterface, tableInterface, getInterface, ...props }) {
 
+    const modalInterface = useRef()
     const generatedNodesInput = useRef()
     const minEdgesPerGeneratedNodeInput = useRef()
     const maxEdgesPerGeneratedNodeInput = useRef()
-    const modalInterface = useRef()
+    const errorMessage = useRef()
 
 
     useEffect(() => {
@@ -221,19 +224,9 @@ function GenerateGraphModal({ graphInterface, tableInterface, getInterface, ...p
                 </center>
             </div>
 
-            <Button className={styles.modal_button} onClick={() => {
-                let nodeCount = parseInt(generatedNodesInput.current.value)
-                let minEdgeCount = parseInt(minEdgesPerGeneratedNodeInput.current.value)
-                let maxEdgeCount = parseInt(maxEdgesPerGeneratedNodeInput.current.value)
+            <div className={styles.error_message} ref={errorMessage} />
 
-                if (isNaN(nodeCount) || isNaN(maxEdgeCount)) return;
-
-                if (maxEdgeCount > nodeCount - 1) return;
-
-                graphInterface.current.generateGraph(nodeCount, minEdgeCount, maxEdgeCount)
-                tableInterface.current.setData(graphInterface.current.getGraph().edges)
-                modalInterface.current.setVisible(false)
-            }}>
+            <Button className={styles.modal_button} onClick={sumbmitGraphData}>
                 submit
             </Button>
         </div>
@@ -244,5 +237,38 @@ function GenerateGraphModal({ graphInterface, tableInterface, getInterface, ...p
     function getModalInterface(interfaceObj) {
         modalInterface.current = interfaceObj
         getInterface?.(modalInterface.current)
+    }
+
+    function sumbmitGraphData() {
+        let nodeCount = parseInt(generatedNodesInput.current.value)
+        let minEdgeCount = parseInt(minEdgesPerGeneratedNodeInput.current.value)
+        let maxEdgeCount = parseInt(maxEdgesPerGeneratedNodeInput.current.value)
+
+        if (isNaN(nodeCount) || isNaN(minEdgeCount) || isNaN(maxEdgeCount)) {
+            errorMessage.current.innerHTML = "Invalid data format"
+            return
+        }
+
+        if (minEdgeCount > maxEdgeCount) {
+            errorMessage.current.innerHTML = "Max edge count can't be greater than min edge count"
+            return
+        }
+
+        if (maxEdgeCount > nodeCount - 1) {
+            errorMessage.current.innerHTML = "Count of edges should always be less than count of nodes"
+            return
+        }
+
+        try {
+            graphInterface.current.generateGraph(nodeCount, minEdgeCount, maxEdgeCount)
+        } catch (e) {
+            errorMessage.current.innerHTML = e.message
+            return
+        }
+
+        errorMessage.current.innerHTML = ''
+
+        tableInterface.current.setData(graphInterface.current.getGraph().edges)
+        modalInterface.current.setVisible(false)
     }
 }

@@ -42,7 +42,7 @@ If the browser did not open, check [http://localhost:3000](http://localhost:3000
 
 ## Conventions
 
-Variables, functions and class methods are named by `cammelCase` convention, classes and react functional components are named by `PascalCase`, and constants are all in `MACRO_CASE`. Each react component has destructured mandatory parameters. Effort is made to make components not too big - react component, if too large, is divided into several subcomponents. JSX tags are kept short - if attribute list for a tag is too long, it is broken apart into several lines, lambdas in cllback attribute parameters line `onClick` are not used.
+Variables, functions and class methods are named by `cammelCase` convention, classes and react functional components are named by `PascalCase`, and constants are all in `MACRO_CASE`. Each react component has destructured mandatory parameters. Effort is made to make components not too big - react component, if too large, is divided into several subcomponents. JSX tags are kept short - if attribute list for a tag is too long, it is broken apart into several lines, lambdas in cllback attribute parameters line `onClick` are not used. The code is formatted using the VS Code formatter.
 
 Parent -> child interaction is provided by using props callback pattern: every child that exposes it's functionality to the parent has `getInterface` attribute. The child calls this method providing a param `interfaceObj`, representing an object with exposed child's functionality. Parent can provide callback to `getInterface` attribute, and assign `interfaceObj` to its own ref or state variables. This way to handle parent -> child interaction is a persistent pattern throughout the project.
 
