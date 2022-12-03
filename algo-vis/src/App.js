@@ -9,17 +9,17 @@ function App() {
 
   return (
     <div className={styles.app}>
-      <Header/>
+      <Header />
       <div className={styles.app_content}>
         <Routes>
           <Route path="/" element={
             <Navigate to="/avl-tree" />
           } />
           <Route path="/topological-sort" element={
-            <TopsortPage/>
+            <TopsortPage />
           } />
           <Route path="/avl-tree" element={
-            <AVLPage/>
+            <AVLPage />
           } />
         </Routes>
       </div>

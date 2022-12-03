@@ -11,7 +11,7 @@ export default function Modal({ getInterface, ...props }) {
     useEffect(() => {
         if (!getInterface) return;
         getInterface?.({
-            setVisible, 
+            setVisible,
             getVisible: () => visibleRef.current
         })
     }, [])

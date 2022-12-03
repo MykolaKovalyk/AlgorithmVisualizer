@@ -15,17 +15,13 @@ export default function FlowControlPanel({
 
     let [paused, setPaused] = useState(false)
 
-    function clearViewCallback() {
-        setPaused(false)
-    }
-
     useEffect(() => {
         getInterface?.({
             setPaused: setPaused
         })
     }, [])
 
-    return <div className={styles.control_panel}>
+    return <div className={styles.control_panel} {...props}>
         <button className={styles.back_button} type="button" onClick={
             () => {
                 stepBack()

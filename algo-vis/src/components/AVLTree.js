@@ -9,14 +9,14 @@ cytoscape.use(dagre);
 
 
 
-export default function AVLTree({ style, visualizationDuration, getInterface, ...props}) {
+export default function AVLTree({ style, visualizationDuration, getInterface, ...props }) {
 
     const identifier = 15
     const graphViewInterface = useRef()
-    const interfaceObj = useRef()
+    const thisInterface = useRef()
 
     const initializeInterfaceObject = async () => {
-        interfaceObj.current = {
+        thisInterface.current = {
             pause: graphViewInterface.current.pauseHandler,
             resume: graphViewInterface.current.resumeHandler,
             stepBack: graphViewInterface.current.stepBack,
@@ -41,32 +41,29 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
             },
             test: async (numberAdded, numberRemoved) => {
                 let newNodes = []
-
                 for (let i = 0; i < numberAdded; i++) {
                     newNodes.push(i)
                 }
 
                 newNodes.sort(() => Math.random() - 0.5)
-
                 for (let newNode of newNodes) {
                     let data = await avlInsert({ identifier: identifier, key: newNode })
                     graphViewInterface.current.addActions(data)
                 }
 
                 newNodes.sort(() => Math.random() - 0.5)
-
                 for (let i = 0; i < numberRemoved; i++) {
                     let data = await avlRemove({ identifier: identifier, key: newNodes[i] })
                     graphViewInterface.current.addActions(data)
                 }
             }
         }
-        getInterface(interfaceObj.current)
+        getInterface(thisInterface.current)
         graphViewInterface.current.addActions([{ type: "set", tree: await getTree(identifier) }])
 
         graphViewInterface.current.getCy().nodes().ungrabify()
 
-        return interfaceObj.current
+        return thisInterface.current
     }
 
 

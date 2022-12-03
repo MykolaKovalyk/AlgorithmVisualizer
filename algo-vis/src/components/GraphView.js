@@ -9,29 +9,21 @@ cytoscape.use(fcose);
 
 export default function GraphView({ getInterface, visualizationDuration, actionHandler, actionHandlerArgs, ...props }) {
 
-    const [graph, setGraph, graphRef] = useStateRef()
-    const [cy, setCy, cyRef] = useStateRef()
+    const thisInterface = useRef()
     const eventHandler = useRef()
     const animationStepDuration = useRef()
+
+    const [graph, setGraph, graphRef] = useStateRef()
+    const [cy, setCy, cyRef] = useStateRef()
 
     animationStepDuration.current = visualizationDuration
 
     useEffect(() => {
-        eventHandler.current = new EventHandler(
-            async (action) =>
-                await actionHandler(
-                    {
-                        getVisualizationDuration: () => { return animationStepDuration.current },
-                        action: action,
-                        getCy: () => cyRef.current,
-                        setGraph: setGraph,
-                        getGraph: () => graphRef.current,
-                        ...actionHandlerArgs
-                    }))
+        eventHandler.current = new EventHandler(handleAction)
 
         eventHandler.current.start()
 
-        getInterface({
+        thisInterface.current = {
             addActions: eventHandler.current.addEvents.bind(eventHandler.current),
             pauseHandler: eventHandler.current.pause.bind(eventHandler.current),
             resumeHandler: eventHandler.current.resume.bind(eventHandler.current),
@@ -42,8 +34,9 @@ export default function GraphView({ getInterface, visualizationDuration, actionH
             getHandler: () => eventHandler.current,
             setGraph: setGraph,
             getGraph: () => graphRef.current
-        })
+        }
 
+        getInterface(thisInterface.current)
         return () => eventHandler.current.stop()
     }, [])
 
@@ -64,4 +57,17 @@ export default function GraphView({ getInterface, visualizationDuration, actionH
         minZoom={0.25}
         cy={setCy}
     />;
+
+
+    function handleAction(action) {
+        return actionHandler(
+            {
+                getVisualizationDuration: () => { return animationStepDuration.current },
+                action: action,
+                getCy: thisInterface.current.getCy,
+                setGraph: thisInterface.current.setGraph,
+                getGraph: thisInterface.current.getGraph,
+                ...actionHandlerArgs
+            })
+    }
 }

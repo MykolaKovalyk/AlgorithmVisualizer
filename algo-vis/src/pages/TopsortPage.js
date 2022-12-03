@@ -50,7 +50,8 @@ export default function TopsortPage(props) {
 
         <DataModificationPanel
             flowControlInterface={flowControlInterface}
-            graphInterface={graphInterface}/>
+            setAnimationInterval={setInterval}
+            graphInterface={graphInterface} />
 
 
 
@@ -59,12 +60,12 @@ export default function TopsortPage(props) {
 
 
 
-function DataModificationPanel({ flowControlInterface, graphInterface, getInterface, ...props }) {
+function DataModificationPanel({ flowControlInterface, graphInterface, setAnimationInterval, ...props }) {
     const tableInterface = useRef()
 
     const startNodeModal = useRef()
     const generateGraphModal = useRef()
-    
+
     return <>
         <div className={styles.data_modification}>
             <div className={styles.data_input}>
@@ -97,17 +98,18 @@ function DataModificationPanel({ flowControlInterface, graphInterface, getInterf
         <SelectStartNodeModal
             flowControlInterface={flowControlInterface}
             graphInterface={graphInterface}
-            getInterface={(interfaceObj) => startNodeModal.current = interfaceObj}/>
+            setAnimationInterval={setAnimationInterval}
+            getInterface={(interfaceObj) => startNodeModal.current = interfaceObj} />
         <GenerateGraphModal
             tableInterface={tableInterface}
             graphInterface={graphInterface}
-            getInterface={(interfaceObj) => generateGraphModal.current = interfaceObj}/>
+            getInterface={(interfaceObj) => generateGraphModal.current = interfaceObj} />
     </>
 }
 
 
 
-function SelectStartNodeModal({ flowControlInterface, graphInterface, getInterface, ...props }) {
+function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimationInterval, getInterface, ...props }) {
     const modalInterface = useRef()
     const animationIntervalInput = useRef()
     const startNodeInput = useRef()
@@ -164,7 +166,7 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, getInterfa
 
     function submitSpeedfactor() {
         if (animationIntervalInput.current.value.length > 0) {
-                setInterval(parseFloat(animationIntervalInput.current.value))
+            setAnimationInterval(parseFloat(animationIntervalInput.current.value))
         }
     }
 }

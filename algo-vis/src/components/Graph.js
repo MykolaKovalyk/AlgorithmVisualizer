@@ -10,11 +10,11 @@ cytoscape.use(fcose)
 export default function Graph(props) {
 
     const graphViewInterface = useRef()
-    const interfaceObj = useRef()
+    const thisInterface = useRef()
     const data = useRef({ nodes: [], edges: [] })
 
     const initializeInterfaceObject = () => {
-        interfaceObj.current = {
+        thisInterface.current = {
             pause: graphViewInterface.current.pauseHandler,
             resume: graphViewInterface.current.resumeHandler,
             stepBack: graphViewInterface.current.stepBack,
@@ -47,9 +47,9 @@ export default function Graph(props) {
         }
 
         graphViewInterface.current.addActions([{ type: "set", graph: { nodes: [], edges: [] } }])
-        props.getInterfaceObject(interfaceObj.current)
+        props.getInterfaceObject(thisInterface.current)
 
-        return interfaceObj.current
+        return thisInterface.current
     }
 
     let style = props.style || {
