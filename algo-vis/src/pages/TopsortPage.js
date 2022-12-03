@@ -255,7 +255,7 @@ function GenerateGraphModal({ graphInterface, tableInterface, getInterface, ...p
         }
 
         if (maxEdgeCount > nodeCount - 1) {
-            errorMessage.current.innerHTML = "Count of edges should always be less than count of nodes"
+            errorMessage.current.innerHTML = "Count of edges per node should always be less than count of nodes"
             return
         }
 
