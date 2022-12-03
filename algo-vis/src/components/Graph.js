@@ -131,8 +131,8 @@ export default function Graph(props) {
         stylesheet={stylesheet}
         style={style}
         layout={layout}
-        getInterfaceObject={(obj) => {
-            graphViewInterface.current = obj
+        getInterface={(interfceObj) => {
+            graphViewInterface.current = interfceObj
             initializeInterfaceObject()
         }}
         visualizationDuration={props.visualizationDuration}

@@ -4,13 +4,16 @@ import styles from "./Modal.module.css"
 
 
 
-export default function Modal({ setCallbacks, ...props }) {
+export default function Modal({ getInterface, ...props }) {
     const outer = useRef()
     const [visible, setVisible, visibleRef] = useStateRef(false)
 
     useEffect(() => {
-        if (!setCallbacks) return;
-        setCallbacks(setVisible, () => visibleRef.current)
+        if (!getInterface) return;
+        getInterface?.({
+            setVisible, 
+            getVisible: () => visibleRef.current
+        })
     }, [])
 
     return <div
@@ -20,7 +23,7 @@ export default function Modal({ setCallbacks, ...props }) {
             if (event.target != outer.current) return;
             setVisible(false)
         }}>
-        <div className={props.className} {...props}>
+        <div {...props}>
             {props.children}
         </div>
     </div>

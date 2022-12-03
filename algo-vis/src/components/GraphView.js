@@ -7,31 +7,31 @@ import fcose from "cytoscape-fcose"
 
 cytoscape.use(fcose);
 
-export default function GraphView(props) {
+export default function GraphView({ getInterface, visualizationDuration, actionHandler, actionHandlerArgs, ...props }) {
 
     const [graph, setGraph, graphRef] = useStateRef()
     const [cy, setCy, cyRef] = useStateRef()
     const eventHandler = useRef()
-    const visualizationDuration = useRef()
+    const animationStepDuration = useRef()
 
-    visualizationDuration.current = props.visualizationDuration
+    animationStepDuration.current = visualizationDuration
 
     useEffect(() => {
         eventHandler.current = new EventHandler(
             async (action) =>
-                await props.actionHandler(
+                await actionHandler(
                     {
-                        getVisualizationDuration: () => { return visualizationDuration.current },
+                        getVisualizationDuration: () => { return animationStepDuration.current },
                         action: action,
                         getCy: () => cyRef.current,
                         setGraph: setGraph,
                         getGraph: () => graphRef.current,
-                        ...props.actionHandlerArgs
+                        ...actionHandlerArgs
                     }))
 
         eventHandler.current.start()
 
-        props.getInterfaceObject?.({
+        getInterface({
             addActions: eventHandler.current.addEvents.bind(eventHandler.current),
             pauseHandler: eventHandler.current.pause.bind(eventHandler.current),
             resumeHandler: eventHandler.current.resume.bind(eventHandler.current),

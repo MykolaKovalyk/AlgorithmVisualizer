@@ -9,7 +9,7 @@ cytoscape.use(dagre);
 
 
 
-export default function AVLTree(props) {
+export default function AVLTree({ style, visualizationDuration, getInterface, ...props}) {
 
     const identifier = 15
     const graphViewInterface = useRef()
@@ -61,7 +61,7 @@ export default function AVLTree(props) {
                 }
             }
         }
-        props.getInterfaceObject(interfaceObj.current)
+        getInterface(interfaceObj.current)
         graphViewInterface.current.addActions([{ type: "set", tree: await getTree(identifier) }])
 
         graphViewInterface.current.getCy().nodes().ungrabify()
@@ -70,7 +70,7 @@ export default function AVLTree(props) {
     }
 
 
-    let style = props.style || {
+    let viewportStyle = style || {
         width: "100%",
         height: "100%"
     }
@@ -78,7 +78,7 @@ export default function AVLTree(props) {
     let layout = {
         name: "dagre",
         animate: true,
-        animationDuration: props.visualizationDuration * 750
+        animationDuration: visualizationDuration * 750
     }
 
     let stylesheet = [
@@ -165,10 +165,10 @@ export default function AVLTree(props) {
 
     return <GraphView
         stylesheet={stylesheet}
-        style={style}
+        style={viewportStyle}
         layout={layout}
-        getInterfaceObject={(obj) => { graphViewInterface.current = obj; initializeInterfaceObject() }}
-        visualizationDuration={props.visualizationDuration}
+        getInterface={(interfceObj) => { graphViewInterface.current = interfceObj; initializeInterfaceObject() }}
+        visualizationDuration={visualizationDuration}
         actionHandler={actionHandler}
         actionHandlerArgs={{ onMessage: props.onMessage }} />;
 }

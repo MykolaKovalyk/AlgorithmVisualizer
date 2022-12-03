@@ -40,7 +40,7 @@ export default function AVLPage() {
         </div>
         <div className={styles.view}>
             <AVLTree
-                getInterfaceObject={(object) => { treeInterface.current = object }}
+                getInterface={(interfceObj) => { treeInterface.current = interfceObj }}
                 onMessage={(message) => messageLabel.current.innerHTML = message}
                 visualizationDuration={intervalBetweenAnimations}
             />
@@ -52,7 +52,7 @@ export default function AVLPage() {
                 isPaused={() => treeInterface.current.isPaused()}
                 stepBack={() => treeInterface.current.stepBack()}
                 stepForward={() => treeInterface.current.stepForward()}
-                onViewCleared={(interfaceObj) => flowControlInterface.current = interfaceObj}
+                getInterface={(interfaceObj) => flowControlInterface.current = interfaceObj}
             />
             <div className={styles.modification_panel}>
                 <center>Modify the tree and watch it as it changes:</center>
@@ -89,7 +89,7 @@ export default function AVLPage() {
         </div>
         <Modal
             className={styles.advanced_modal}
-            setCallbacks={(setVisible, getVisible) => advancedOptionsPanelInterface.current = { setVisible, getVisible }}>
+            getInterface={(interfaceObj) => advancedOptionsPanelInterface.current = interfaceObj}>
             <div className={styles.modal_container}>
                 <div className={styles.modal_text_container}>
                     Slow down by
