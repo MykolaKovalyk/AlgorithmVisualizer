@@ -54,7 +54,8 @@ def topsort(edges, start):
                 for edge in edges:
                     if edge[0] == current_node:
                         if edge[1] in traverse_stack:
-                            logger.found_cycle(traverse_stack)
+                            cycle = [element for index, element in enumerate(traverse_stack) if index  >= traverse_stack.index(edge[1])]
+                            logger.found_cycle(cycle)
                             return None, logger
                         if edge[1] not in traversed_nodes and edge[1] not in visited:
                             traverse_stack.append(edge[1])

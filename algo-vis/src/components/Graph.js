@@ -231,7 +231,7 @@ async function actionHandler({ action, ...props }) {
             let cyNode = cy.getElementById(pathNode)
             cyNode.addClass("cycle")
         }
-        props.onMessage?.(`Graph is not acyclic. Cycle in the path [${action.traverse_stack}] was found`)
+        props.onMessage?.(`Graph is not acyclic. Cycle [${action.traverse_stack}] was found`)
     }
 
     action.handled = true
