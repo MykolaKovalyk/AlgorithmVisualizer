@@ -183,7 +183,7 @@ export function TableItem({ data, yIndex, modifyTableEntry, addOrRemoveEntry, fo
                 targetInput.selectionEnd = focus.current.position
                 targetInput.current.focus()
             }
-
+            focus.current.entry = null
         }
         dataInputs.current = {
             source: sourceInput.current,
