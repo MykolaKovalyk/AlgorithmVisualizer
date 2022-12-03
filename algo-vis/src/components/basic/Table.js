@@ -15,14 +15,14 @@ export default function Table({ getInterface, ...props }) {
 
     // empty array is intentional, i need this to run once
     /* eslint-disable react-hooks/exhaustive-deps */
-    useEffect(() =>
+    useEffect(() => {
         getInterface?.({
             setData: (data) => {
                 table.current = data;
                 setUpdate(!updateRef.current)
             },
             getData: () => table.current
-        }), [])
+        })}, [])
     /* eslint-enable react-hooks/exhaustive-deps */
 
 

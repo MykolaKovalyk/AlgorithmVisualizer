@@ -10,7 +10,7 @@ export default function Modal({ getInterface, ...props }) {
     // empty array is intentional, i need this to run once
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
-        getInterface?.({
+        getInterface({
             setVisible,
             getVisible: () => visibleRef.current
         })

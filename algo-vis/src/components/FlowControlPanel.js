@@ -17,10 +17,10 @@ export default function FlowControlPanel({
 
     // empty array is intentional, i need this to run once
     /* eslint-disable react-hooks/exhaustive-deps */
-    useEffect(() =>
+    useEffect(() => {
         getInterface?.({
             setPaused: setPaused
-        }), [])
+        })}, [])
     /* eslint-enable react-hooks/exhaustive-deps */
 
 
