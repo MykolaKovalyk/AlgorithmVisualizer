@@ -8,7 +8,11 @@ export default function Table({ getInterface, ...props }) {
     let tableRef = useRef()
     let table = useRef([[null, null],])
     let [update, setUpdate, updateRef] = useStateRef(false)
-    let focus = useRef()
+    let focus = useRef({
+        entry: null,
+        item: null,
+        position: null
+    })
 
     useEffect(() => {
         getInterface?.({
@@ -21,11 +25,26 @@ export default function Table({ getInterface, ...props }) {
     }, [])
 
 
+    return <table ref={tableRef} {...props}>
+        <tbody >
+            {table.current.map((item, index) =>
+                <TableItem
+                    key={index}
+                    yIndex={index}
+                    data={{ source: item[0], target: item[1] }}
+                    focus={focus}
+                    modifyTableEntry={modifyTableEntry}
+                    addOrRemoveEntry={addOrRemoveEntry}
+                />)}
+        </tbody>
+    </table>
+
 
     function modifyTableEntry(event, key, data) {
         if (!data) return
 
-        focus.current = null
+        focus.current.entry = null
+        focus.current.item = null
         let source = parseInt(data.source.value);
         if (isNaN(source)) {
             source = null
@@ -67,9 +86,10 @@ export default function Table({ getInterface, ...props }) {
                 let temp = table.current[key + 1][1]
                 table.current[key + 1][1] = table.current[key][1]
                 table.current[key][1] = temp
+                focus.current.item = 0
             } else if (event.target === data.target) {
-                let preCursorString = parseInt(table.current[key + 1][1]?.toString().substring(0, splitIndex + 1))
-                let postCursorString = parseInt(table.current[key + 1][1]?.toString().substring(splitIndex + 1))
+                let preCursorString = parseInt(table.current[key + 1][1]?.toString().substring(0, splitIndex))
+                let postCursorString = parseInt(table.current[key + 1][1]?.toString().substring(splitIndex))
 
                 table.current[key][1] = isNaN(preCursorString) ? null : preCursorString
                 table.current[key + 1][1] = isNaN(postCursorString) ? null : postCursorString
@@ -77,13 +97,14 @@ export default function Table({ getInterface, ...props }) {
                 let temp = table.current[key + 1][0]
                 table.current[key + 1][0] = table.current[key][0]
                 table.current[key][0] = temp
+                focus.current.item = 1
             }
 
-            focus.current = key + 1
+            focus.current.entry = key + 1
             setUpdate(!update)
         } else if (event.key === "Backspace") {
             if (event.target.selectionEnd !== 0) return;
-            if (table.current.length < 2) return;
+            if (key < 1) return;
 
             event.preventDefault()
 
@@ -107,32 +128,47 @@ export default function Table({ getInterface, ...props }) {
             }
 
             table.current = table.current.filter((element, index) => index !== key - 1)
-            focus.current = key - 1
+            focus.current.entry = key - 1
+            focus.current.item = event.target === data.source ? 0 : 1
+
 
             setUpdate(!update)
         } else if (event.key === "ArrowDown") {
-            focus.current = key + 1
+            if(focus.current.entry === table.current.length - 1) return
+
+            focus.current.entry = key + 1
+            focus.current.item = event.target === data.source ? 0 : 1
             setUpdate(!update)
         } else if (event.key === "ArrowUp") {
-            focus.current = key - 1
+            if(focus.current.entry === 0) return
+
+            focus.current.entry = key - 1
+            focus.current.item = event.target === data.source ? 0 : 1
+            setUpdate(!update)
+        } else if (event.key === "ArrowLeft") {
+            if(focus.current.entry === 0 && focus.current.item === 0) return
+
+            if(focus.current.item === 1) {
+                focus.current.item = 0
+            } else {
+                focus.current.entry = key - 1
+                focus.current.item = 1
+            }
+
+            setUpdate(!update)
+        } else if (event.key === "ArrowRight") {
+            if(focus.current.entry === table.current.length - 1 && focus.current.item === 1) return
+
+            if(focus.current.item === 0) {
+                focus.current.item = 1
+            } else {
+                focus.current.entry = key + 1
+                focus.current.item = 0
+            }
+            
             setUpdate(!update)
         }
     }
-
-
-    return <table ref={tableRef} {...props}>
-        <tbody >
-            {table.current.map((item, index) =>
-                <TableItem
-                    key={index}
-                    yIndex={index}
-                    data={{ source: item[0], target: item[1] }}
-                    focus={focus}
-                    modifyTableEntry={modifyTableEntry}
-                    addOrRemoveEntry={addOrRemoveEntry}
-                />)}
-        </tbody>
-    </table>
 }
 
 
@@ -145,8 +181,15 @@ export function TableItem({ data, yIndex, modifyTableEntry, addOrRemoveEntry, fo
     useEffect(() => {
         sourceInput.current.value = data.source
         targetInput.current.value = data.target
-        if (focus.current === yIndex) {
-            sourceInput.current.focus()
+        if (focus.current.entry === yIndex) {
+            if(focus.current.item === 0) {
+                sourceInput.selectionEnd = focus.current.position
+                sourceInput.current.focus()
+            } else {
+                targetInput.selectionEnd = focus.current.position
+                targetInput.current.focus()
+            }
+
         }
         dataInputs.current = {
             source: sourceInput.current,

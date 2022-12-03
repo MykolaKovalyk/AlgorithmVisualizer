@@ -1,9 +1,9 @@
 import styles from "./AVLPage.module.css"
 import { useEffect, useRef, useState } from "react";
 import AVLTree from "../components/AVLTree";
-import Button from "../components/Button";
+import Button from "../components/basic/Button";
 import FlowControlPanel from "../components/FlowControlPanel";
-import Modal from "../components/Modal";
+import Modal from "../components/basic/Modal";
 
 const DEFAULT_COUNT_OF_TEST_ADDITIONS = 20
 const DEFAULT_COUNT_OF_TEST_REMOVALS = 10
@@ -15,7 +15,7 @@ export default function AVLPage() {
 
     const messageLabel = useRef()
 
-    const onViewClearedCbck = useRef()
+    const flowControlInterface = useRef()
 
     const input = useRef()
     const animationIntervalinput = useRef()
@@ -52,7 +52,7 @@ export default function AVLPage() {
                 isPaused={() => treeInterface.current.isPaused()}
                 stepBack={() => treeInterface.current.stepBack()}
                 stepForward={() => treeInterface.current.stepForward()}
-                onViewCleared={(onViewClearedCallback) => onViewClearedCbck.current = onViewClearedCallback}
+                onViewCleared={(interfaceObj) => flowControlInterface.current = interfaceObj}
             />
             <div className={styles.modification_panel}>
                 <center>Modify the tree and watch it as it changes:</center>
@@ -79,7 +79,7 @@ export default function AVLPage() {
                 </div>
             </div>
             <Button className={styles.clear_button} onClick={() => {
-                onViewClearedCbck.current?.()
+                flowControlInterface.current?.setPaused(false)
                 treeInterface.current.clear()
             }}>
                 clear
@@ -125,4 +125,10 @@ export default function AVLPage() {
             <Button className={styles.close_modal_button} onClick={() => advancedOptionsPanelInterface.current.setVisible(false)}>close</Button>
         </Modal>
     </div>
+}
+
+
+
+function ActionPanel() {
+
 }

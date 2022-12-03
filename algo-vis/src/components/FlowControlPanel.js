@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import Button from "./Button"
 import styles from "./FlowControlPanel.module.css"
 
 
@@ -10,7 +9,7 @@ export default function FlowControlPanel({
     isPaused,
     stepBack,
     stepForward,
-    onViewCleared,
+    getInterface,
     ...props
 }) {
 
@@ -21,7 +20,9 @@ export default function FlowControlPanel({
     }
 
     useEffect(() => {
-        onViewCleared(clearViewCallback)
+        getInterface?.({
+            setPaused: setPaused
+        })
     }, [])
 
     return <div className={styles.control_panel}>
@@ -44,7 +45,7 @@ export default function FlowControlPanel({
         <button className={styles.forward_button} type="button" onClick={
             () => {
                 stepForward()
-                onViewCleared()
+                setPaused(true)
             }
         } />
     </div>

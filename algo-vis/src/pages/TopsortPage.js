@@ -2,9 +2,9 @@ import styles from "./TopsortPage.module.css"
 import { useEffect, useRef, useState } from "react";
 import Graph from "../components/Graph";
 import FlowControlPanel from "../components/FlowControlPanel";
-import Table from "../components/Table"
-import Button from "../components/Button";
-import Modal from "../components/Modal";
+import Table from "../components/basic/Table"
+import Button from "../components/basic/Button";
+import Modal from "../components/basic/Modal";
 
 
 const DEFAULT_ANIMATION_DURATION_FACTOR = 0.5
@@ -15,7 +15,7 @@ const DEFAULT_COUNT_OF_MAX_EDGES_PER_GENERATED_NODE = 3
 export default function TopsortPage(props) {
     const graphInterface = useRef()
 
-    const onViewClearedCbck = useRef()
+    const flowControlInterface = useRef()
 
     const messageLabel = useRef()
 
@@ -63,7 +63,7 @@ export default function TopsortPage(props) {
             isPaused={() => graphInterface.current.isPaused()}
             stepBack={() => graphInterface.current.stepBack()}
             stepForward={() => graphInterface.current.stepForward()}
-            onViewCleared={(onViewClearedCallback) => onViewClearedCbck.current = onViewClearedCallback}
+            getInterface={(interfaceObj) => flowControlInterface.current = interfaceObj}
         />
 
         <div className={styles.data_modification}>
@@ -82,8 +82,8 @@ export default function TopsortPage(props) {
                 </Button>
             </div>
             <Button className={styles.clear_button} onClick={() => {
-                onViewClearedCbck.current?.()
-                return graphInterface.current.clear()}}>
+                flowControlInterface.current?.setPaused(false)
+                graphInterface.current.clear()}}>
                 Clear
             </Button>
 
