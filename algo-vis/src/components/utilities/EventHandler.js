@@ -71,6 +71,7 @@ export default class EventHandler {
 
     dropBufferedEvents() {
         this.#paused = false
+        this.#reverseExecutionOrder = false
         this.#eventQueue.clear()
     }
 

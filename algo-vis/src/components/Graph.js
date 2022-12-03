@@ -14,44 +14,6 @@ export default function Graph(props) {
     const thisInterface = useRef()
     const data = useRef({ nodes: [], edges: [] })
 
-    const initializeInterfaceObject = () => {
-        thisInterface.current = {
-            pause: graphViewInterface.current.pauseHandler,
-            resume: graphViewInterface.current.resumeHandler,
-            stepBack: graphViewInterface.current.stepBack,
-            stepForward: graphViewInterface.current.stepForward,
-            isPaused: () => graphViewInterface.current.getHandler().paused,
-            clear: () => {
-                graphViewInterface.current.reset()
-                data.current = { nodes: [], edges: [] }
-                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
-            },
-            getGraph: () => data.current,
-            setGraph: (edges) => {
-                let nodes = []
-                for (let edge of edges) {
-                    for (let edgeNode of edge) {
-                        if (!nodes.includes(edgeNode)) {
-                            nodes.push(edgeNode)
-                        }
-                    }
-                }
-                data.current = { nodes, edges }
-                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
-            },
-            generateGraph: (countOfNodes, minCountOfEdges, maxCountOfEdges) => {
-                data.current = generateGraph(countOfNodes, minCountOfEdges, maxCountOfEdges)
-                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
-                return data.current
-            },
-            topsort: (startNode) => { topologicalSort(data.current, startNode, graphViewInterface) }
-        }
-
-        graphViewInterface.current.addActions([{ type: "set", graph: { nodes: [], edges: [] } }])
-        props.getInterfaceObject(thisInterface.current)
-
-        return thisInterface.current
-    }
 
     let style = props.style || {
         width: "100%",
@@ -128,6 +90,7 @@ export default function Graph(props) {
             }
         }]
 
+
     return <GraphView
         stylesheet={stylesheet}
         style={style}
@@ -139,6 +102,45 @@ export default function Graph(props) {
         visualizationDuration={props.visualizationDuration}
         actionHandler={actionHandler}
         actionHandlerArgs={{ onMessage: props.onMessage }} />
+
+    function initializeInterfaceObject() {
+        thisInterface.current = {
+            pause: graphViewInterface.current.pauseHandler,
+            resume: graphViewInterface.current.resumeHandler,
+            stepBack: graphViewInterface.current.stepBack,
+            stepForward: graphViewInterface.current.stepForward,
+            isPaused: () => graphViewInterface.current.getHandler().paused,
+            clear: () => {
+                graphViewInterface.current.reset()
+                data.current = { nodes: [], edges: [] }
+                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
+            },
+            getGraph: () => data.current,
+            setGraph: (edges) => {
+                let nodes = []
+                for (let edge of edges) {
+                    for (let edgeNode of edge) {
+                        if (!nodes.includes(edgeNode)) {
+                            nodes.push(edgeNode)
+                        }
+                    }
+                }
+                data.current = { nodes, edges }
+                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
+            },
+            generateGraph: (countOfNodes, minCountOfEdges, maxCountOfEdges) => {
+                data.current = generateGraph(countOfNodes, minCountOfEdges, maxCountOfEdges)
+                graphViewInterface.current.addActions([{ type: "set", graph: data.current }])
+                return data.current
+            },
+            topsort: (startNode) => { topologicalSort(data.current, startNode, graphViewInterface) }
+        }
+
+        graphViewInterface.current.addActions([{ type: "set", graph: { nodes: [], edges: [] } }])
+        props.getInterfaceObject(thisInterface.current)
+
+        return thisInterface.current
+    }
 }
 
 

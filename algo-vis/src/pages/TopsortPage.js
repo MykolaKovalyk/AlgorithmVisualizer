@@ -23,7 +23,6 @@ export default function TopsortPage(props) {
     const [intervalBetweenAnimations, setInterval] = useState(DEFAULT_ANIMATION_DURATION_FACTOR)
 
 
-
     return <div>
 
         <div className={styles.message_area}>
@@ -52,9 +51,7 @@ export default function TopsortPage(props) {
             flowControlInterface={flowControlInterface}
             setAnimationInterval={setInterval}
             graphInterface={graphInterface} />
-
-
-
+        
     </div>
 }
 
@@ -65,6 +62,7 @@ function DataModificationPanel({ flowControlInterface, graphInterface, setAnimat
 
     const startNodeModal = useRef()
     const generateGraphModal = useRef()
+
 
     return <>
         <div className={styles.data_modification}>
@@ -115,9 +113,11 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
     const startNodeInput = useRef()
     const startingNodeResponse = useRef()
 
+
     useEffect(() => {
         animationIntervalInput.current.value = DEFAULT_ANIMATION_DURATION_FACTOR
     }, [])
+
 
     return <Modal
         className={styles.modal}
@@ -180,11 +180,13 @@ function GenerateGraphModal({ graphInterface, tableInterface, getInterface, ...p
     const maxEdgesPerGeneratedNodeInput = useRef()
     const modalInterface = useRef()
 
+
     useEffect(() => {
         generatedNodesInput.current.value = DEFAULT_COUNT_OF_GENERATED_NODES
         minEdgesPerGeneratedNodeInput.current.value = DEFAULT_COUNT_OF_MIN_EDGES_PER_GENERATED_NODE
         maxEdgesPerGeneratedNodeInput.current.value = DEFAULT_COUNT_OF_MAX_EDGES_PER_GENERATED_NODE
     }, [])
+
 
     return <Modal
         className={styles.modal}
