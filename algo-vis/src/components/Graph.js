@@ -3,6 +3,7 @@ import cytoscape from "cytoscape"
 import fcose from "cytoscape-fcose"
 import { topsort } from "../requests"
 import GraphView from "./GraphView"
+import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
 
 
 cytoscape.use(fcose)
@@ -47,7 +48,7 @@ export default function Graph(props) {
             }
         },
         {
-            selector: '.selectedEdge',
+            selector: '.selected_edge',
             style: {
                 'line-color': "black",
             }
@@ -144,8 +145,6 @@ export default function Graph(props) {
 }
 
 
-
-
 function generateGraph(countOfNodes, minCountOfEdgesPerNode, maxCountOfEdgesPerNode) {
     let nodes = []
     for (let i = 0; i < countOfNodes; i++) {
@@ -186,35 +185,39 @@ function generateGraph(countOfNodes, minCountOfEdgesPerNode, maxCountOfEdgesPerN
     return { nodes, edges }
 }
 
+
 async function topologicalSort(graph, startNode, controlObj) {
     let data = await topsort(graph.edges, startNode)
     controlObj.current?.addActions(data)
 }
 
 
-
-
-async function actionHandler({ action, ...props }) {
+async function actionHandler({ getCy, setGraph, getVisualizationDuration, action, ...props }) {
     let actionType = action.type
-    let visualizationDuration = props.getVisualizationDuration?.()
-    let cy = props.getCy()
+    let visualizationDuration = getVisualizationDuration()
+    let cy = getCy()
+
+
+    if (actionType === "set") {
+        clearAllClasses(cy)
+        setGraph(toCytoscapeElements(action.graph, true))
+    }
 
     if (actionType === "step") {
-        let nodeClasses = {
-            selected: action.selected,
-            selectedEdge: action.selected_edge,
-            path: action.path,
-            traversed: action.traversed,
+        clearAllClasses(cy)
+
+        assignClassesToElements([action.selected], "selected", cy)
+        assignClassesToElements([`${action.selected_edge[0]} ${action.selected_edge[1]}`], "selected_edge", cy)
+        assignClassesToElements(action.traversed, "traversed", cy)
+
+        if (action.path) {
+            assignClassesToElements(action.path.filter((element) => element !== action.selected), "path", cy)
         }
 
         props.onMessage?.(JSON.stringify(action.traversed))
 
-        assignClassToNodes(nodeClasses, cy)
-        if (!action.handled) await delay(visualizationDuration * 1000)
-    }
-
-    if (actionType === "set") {
-        props.setGraph(toCytoscapeElements(action.graph, cy))
+        if (!action.handled && visualizationDuration)
+            await delay(visualizationDuration * 1000)
     }
 
     if (actionType === "final_array") {
@@ -222,81 +225,16 @@ async function actionHandler({ action, ...props }) {
         for (let cyNode of cy.elements()) {
             cyNode.addClass("finished")
         }
-        if (!action.handled) await delay(visualizationDuration * 1000)
+        if (!action.handled && visualizationDuration)
+            await delay(visualizationDuration * 1000)
     }
 
     if (actionType === "found_cycle") {
         clearAllClasses(cy)
-        for (let pathNode of action.traverse_stack) {
-            let cyNode = cy.getElementById(pathNode)
-            cyNode.addClass("cycle")
-        }
+        assignClassesToElements(action.traverse_stack, "cycle", cy)
         props.onMessage?.(`Graph is not acyclic. Cycle [${action.traverse_stack}] was found`)
     }
 
+
     action.handled = true
-}
-
-function toCytoscapeElements(graph, cy) {
-
-    if (!graph) {
-        return {}
-    }
-
-    for (const node of cy.elements()) {
-        node.removeClass(node.classes())
-    }
-
-    let elements = []
-
-    if (graph.nodes) {
-        for (const node of graph.nodes) {
-            elements.push({ data: { id: node, label: `${node}` }, classes: null })
-        }
-    }
-
-    if (graph.edges) {
-        for (const edge of graph.edges) {
-            elements.push({ data: { id: `${edge[0]} ${edge[1]}`, source: edge[0], target: edge[1] } })
-        }
-    }
-
-    return elements
-}
-
-function assignClassToNodes(nodeClasses, cy) {
-    clearAllClasses(cy)
-
-    let selected = cy.getElementById(nodeClasses.selected)
-    selected.removeClass("path")
-    selected.addClass("selected")
-
-    let selectedEdge = cy.getElementById(`${nodeClasses.selectedEdge[0]} ${nodeClasses.selectedEdge[1]}`)
-    selectedEdge.addClass("selectedEdge")
-
-    for (let pathNode of nodeClasses.path) {
-        if (pathNode !== parseInt(selected.id())) {
-            let cyNode = cy.getElementById(pathNode)
-            cyNode.addClass("path")
-        }
-    }
-
-    for (let pathNode of nodeClasses.traversed) {
-        let cyNode = cy.getElementById(pathNode)
-        cyNode.removeClass(cyNode.classes())
-        cyNode.addClass("traversed")
-    }
-}
-
-function clearAllClasses(cy) {
-    for (const node of cy.elements()) {
-        node.removeClass(node.classes())
-    }
-}
-
-
-
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
 }

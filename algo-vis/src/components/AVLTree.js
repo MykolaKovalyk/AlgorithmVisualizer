@@ -3,10 +3,10 @@ import cytoscape from "cytoscape";
 import dagre from 'cytoscape-dagre';
 import GraphView from "./GraphView";
 import { avlClear, avlGetItem, avlInsert, avlRemove, getTree } from "../requests";
+import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
+
 
 cytoscape.use(dagre);
-
-
 
 
 export default function AVLTree({ style, visualizationDuration, getInterface, ...props }) {
@@ -175,6 +175,7 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
 async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {
     let actionType = action.type
     let visualizationDuration = props.getVisualizationDuration?.()
+    let cy = getCy()
 
 
     if (action.old_tree) {
@@ -186,17 +187,16 @@ async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {
         props.onMessage?.(action.message)
     }
 
-    let cy = getCy()
 
     if (actionType === "mark_nodes") {
-        assignClassToNodes(action.nodes, action.reason, cy)
+        clearAllClasses(cy)
+        assignClassesToElements(action.nodes, action.reason, cy)
         if (!action.handled && visualizationDuration)
             await delay(visualizationDuration * 500)
     }
 
-
     if (actionType === "refresh_state") {
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+        setGraph(toCytoscapeElements(action.tree))
         if (!action.handled && visualizationDuration)
             await delay(visualizationDuration * 1000)
     }
@@ -208,53 +208,9 @@ async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {
     }
 
     if (actionType === "set") {
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
+        setGraph(toCytoscapeElements(action.tree))
     }
+
 
     action.handled = true
-}
-
-function convertTreeToCytoscapeElements(tree, cy) {
-
-    if (!tree) {
-        return {}
-    }
-
-    let elements = []
-
-    if (tree.nodes) {
-        for (const node of tree.nodes) {
-            elements.push({ data: { id: node, label: `${node}` }, classes: null })
-        }
-    }
-
-    if (tree.edges) {
-        for (const edge of tree.edges) {
-            elements.push({ data: { source: edge[0], target: edge[1] } })
-        }
-    }
-
-    return elements;
-}
-
-function assignClassToNodes(nodesWithClass, classes, cy) {
-    clearAllClasses(cy)
-
-    let elements = []
-    for (const node of nodesWithClass) {
-        const cyNode = cy.getElementById(node)
-        cyNode.addClass(classes)
-        elements.push(node)
-    }
-}
-
-function clearAllClasses(cy) {
-    for (const node of cy.elements()) {
-        node.removeClass(node.classes())
-    }
-}
-
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
