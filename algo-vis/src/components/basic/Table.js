@@ -102,23 +102,23 @@ export default function Table({ getInterface, ...props }) {
 
             event.preventDefault()
 
-            table.current[key][0] = parseInt(
+            table.current[key - 1][0] = parseInt(
                 [
                     table.current[key - 1][0]?.toString(),
                     table.current[key][0]?.toString()
                 ].join(''))
-            table.current[key][1] = parseInt(
+            table.current[key - 1][1] = parseInt(
                 [
                     table.current[key - 1][1]?.toString(),
                     table.current[key][1]?.toString()
                 ].join(''))
 
-            if (isNaN(table.current[key][0])) {
-                table.current[key][0] = null
+            if (isNaN(table.current[key - 1][0])) {
+                table.current[key - 1][0] = null
             }
 
-            if (isNaN(table.current[key][1])) {
-                table.current[key][1] = null
+            if (isNaN(table.current[key - 1][1])) {
+                table.current[key - 1][1] = null
             }
 
             table.current = table.current.filter((element, index) => index !== key)
