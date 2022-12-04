@@ -17,7 +17,7 @@ export default function Header(props) {
                 Kovalyk Mykola
             </h2>
         </div>
-        <div>
+        <div className={styles.title}>
             <h1>
                 Algorithm Visualizer
             </h1>
