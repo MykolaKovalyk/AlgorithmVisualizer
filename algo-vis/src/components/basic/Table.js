@@ -21,7 +21,8 @@ export default function Table({ getInterface, ...props }) {
                 setUpdate(!updateRef.current)
             },
             getData: () => table.current
-        })}, [])
+        })
+    }, [])
     /* eslint-enable react-hooks/exhaustive-deps */
 
 
@@ -45,7 +46,7 @@ export default function Table({ getInterface, ...props }) {
 
         focus.current.entry = null
         focus.current.item = null
-        
+
         let source = parseInt(data.source.value);
         if (isNaN(source)) {
             source = null
@@ -138,10 +139,9 @@ export default function Table({ getInterface, ...props }) {
             focus.current.entry = key - 1
             focus.current.item = event.target === data.source ? 0 : 1
             setUpdate(!update)
-        } 
+        }
     }
 }
-
 
 
 export function TableItem({ data, yIndex, modifyTableEntry, addOrRemoveEntry, focus, ...props }) {
