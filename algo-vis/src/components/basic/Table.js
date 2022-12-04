@@ -9,8 +9,7 @@ export default function Table({ getInterface, ...props }) {
     let [update, setUpdate, updateRef] = useStateRef(false)
     let focus = useRef({
         entry: null,
-        item: null,
-        position: null
+        item: null
     })
 
     // empty array is intentional, i need this to run once
@@ -121,7 +120,7 @@ export default function Table({ getInterface, ...props }) {
                 table.current[key][1] = null
             }
 
-            table.current = table.current.filter((element, index) => index !== key - 1)
+            table.current = table.current.filter((element, index) => index !== key)
             focus.current.entry = key - 1
             focus.current.item = event.target === data.source ? 0 : 1
 
@@ -139,29 +138,7 @@ export default function Table({ getInterface, ...props }) {
             focus.current.entry = key - 1
             focus.current.item = event.target === data.source ? 0 : 1
             setUpdate(!update)
-        } else if (event.key === "ArrowLeft") {
-            if (focus.current.entry === 0 && focus.current.item === 0) return
-
-            if (focus.current.item === 1) {
-                focus.current.item = 0
-            } else {
-                focus.current.entry = key - 1
-                focus.current.item = 1
-            }
-
-            setUpdate(!update)
-        } else if (event.key === "ArrowRight") {
-            if (focus.current.entry === table.current.length - 1 && focus.current.item === 1) return
-
-            if (focus.current.item === 0) {
-                focus.current.item = 1
-            } else {
-                focus.current.entry = key + 1
-                focus.current.item = 0
-            }
-            
-            setUpdate(!update)
-        }
+        } 
     }
 }
 
@@ -177,10 +154,8 @@ export function TableItem({ data, yIndex, modifyTableEntry, addOrRemoveEntry, fo
         targetInput.current.value = data.target
         if (focus.current.entry === yIndex) {
             if (focus.current.item === 0) {
-                sourceInput.selectionEnd = focus.current.position
                 sourceInput.current.focus()
             } else {
-                targetInput.selectionEnd = focus.current.position
                 targetInput.current.focus()
             }
             focus.current.entry = null
