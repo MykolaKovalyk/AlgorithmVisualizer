@@ -86,6 +86,12 @@
     margin: 0 auto;
 }
 
+.error_message {
+    color: red;
+    width: fit-content;
+    margin: 10px auto;
+}
+
 .modal_button {
     display: block;
     width: 150px;

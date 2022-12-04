@@ -4,6 +4,7 @@ import AVLTree from "../components/AVLTree";
 import Button from "../components/basic/Button";
 import FlowControlPanel from "../components/FlowControlPanel";
 import Modal from "../components/basic/Modal";
+import { delay } from "../components/HelperFunctions";
 
 
 const DEFAULT_COUNT_OF_TEST_ADDITIONS = 20
@@ -42,7 +43,7 @@ export default function AVLPage() {
                 getInterface={(interfaceObj) => flowControlInterface.current = interfaceObj}
             />
 
-            <ActionPanel />
+            <ActionPanel treeInterface={treeInterface} />
 
             <Button className={styles.clear_button} onClick={clearViewport}>
                 clear
@@ -66,6 +67,7 @@ export default function AVLPage() {
 function ActionPanel({ treeInterface, ...props }) {
 
     const newValueInput = useRef()
+    const errorMessage = useRef()
 
     return <div className={styles.modification_panel} {...props}>
         <center>Modify the tree and watch it as it changes:</center>
@@ -74,6 +76,7 @@ function ActionPanel({ treeInterface, ...props }) {
             <div className={styles.modification_input}>
                 <input className={styles.modification_input_field} ref={newValueInput} />
             </div>
+            <div className={styles.error_message} ref={errorMessage} />
             <Button className={styles.button} onClick={find}>
                 find
             </Button>
@@ -88,15 +91,36 @@ function ActionPanel({ treeInterface, ...props }) {
 
 
     function find() {
-        treeInterface.current.find(parseInt(newValueInput.current.value))
+        let node = parseInt(newValueInput.current.value)
+        if (isNaN(node)) {
+            errorMessage.current.innerHTML = "Invalid input format, should be a whole number"
+            return
+        }
+        errorMessage.current.innerHTML = ""
+
+        treeInterface.current.find(node)
     }
 
     function insert() {
-        treeInterface.current.insert(parseInt(newValueInput.current.value))
+        let node = parseInt(newValueInput.current.value)
+        if (isNaN(node)) {
+            errorMessage.current.innerHTML = "Invalid input format, should be a whole number"
+            return
+        }
+        errorMessage.current.innerHTML = ""
+
+        treeInterface.current.insert(parseInt(node))
     }
 
     function remove() {
-        treeInterface.current.remove(parseInt(newValueInput.current.value))
+        let node = parseInt(newValueInput.current.value)
+        if (isNaN(node)) {
+            errorMessage.current.innerHTML = "Invalid input format, should be a whole number"
+            return
+        }
+        errorMessage.current.innerHTML = ""
+
+        treeInterface.current.remove(parseInt(node))
     }
 }
 
@@ -105,6 +129,7 @@ function AdvancedOptionsModal({ treeInterface, setAnimationInterval, ...props })
 
     const modalInterface = useRef()
     const animationIntervalInput = useRef()
+    const submitAnimationIntervalButton = useRef()
     const testAddItemsInput = useRef()
     const testRemoveItemsInput = useRef()
 
@@ -130,11 +155,7 @@ function AdvancedOptionsModal({ treeInterface, setAnimationInterval, ...props })
                     <input placeholder={DEFAULT_ANIMATION_DURATION_FACTOR} className={styles.number_input} type="number" ref={animationIntervalInput} />
                     times
                 </div>
-                <Button className={styles.modal_button} onClick={() => {
-                    if (animationIntervalInput.current.value.length > 0) {
-                        submitSpeedfactor(parseFloat(animationIntervalInput.current.value))
-                    }
-                }}>
+                <Button className={styles.modal_button} onClick={submitAnimationInterval} ref={submitAnimationIntervalButton}>
                     submit
                 </Button>
                 <div className={styles.modal_text_container}>
@@ -161,9 +182,12 @@ function AdvancedOptionsModal({ treeInterface, setAnimationInterval, ...props })
     </>
 
 
-    function submitSpeedfactor() {
+    async function submitAnimationInterval() {
         if (animationIntervalInput.current.value.length > 0) {
             setAnimationInterval(parseFloat(animationIntervalInput.current.value))
+            submitAnimationIntervalButton.current.innerHTML = "submitted!"
+            await delay(1500)
+            submitAnimationIntervalButton.current.innerHTML = "submit"
         }
     }
 }

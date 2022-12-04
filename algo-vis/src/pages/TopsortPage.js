@@ -5,6 +5,7 @@ import FlowControlPanel from "../components/FlowControlPanel";
 import Table from "../components/basic/Table"
 import Button from "../components/basic/Button";
 import Modal from "../components/basic/Modal";
+import { delay } from "../components/HelperFunctions";
 
 
 const DEFAULT_ANIMATION_DURATION_FACTOR = 0.5
@@ -69,22 +70,20 @@ function DataModificationPanel({ flowControlInterface, graphInterface, setAnimat
             <div className={styles.data_input}>
                 <Button className={styles.data_button}
                     onClick={() => graphInterface.current.setGraph(tableInterface.current.getData())}>
-                    Submit
+                    submit
                 </Button>
-                <Button className={styles.data_button}
-                    onClick={() => startNodeModal.current.setVisible(true)}>
-                    Start
+                <Button className={styles.data_button} onClick={() => startNodeModal.current.setVisible(true)}>
+                    start
                 </Button>
-                <Button className={styles.data_button}
-                    onClick={() => generateGraphModal.current.setVisible(true)}>
-                    Generate
+                <Button className={styles.data_button} onClick={() => generateGraphModal.current.setVisible(true)}>
+                    generate
                 </Button>
             </div>
             <Button className={styles.clear_button} onClick={() => {
                 flowControlInterface.current?.setPaused(false)
                 graphInterface.current.clear()
             }}>
-                Clear
+                clear
             </Button>
 
             <center>Input your data:</center>
@@ -109,6 +108,7 @@ function DataModificationPanel({ flowControlInterface, graphInterface, setAnimat
 function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimationInterval, getInterface, ...props }) {
     const modalInterface = useRef()
     const animationIntervalInput = useRef()
+    const submitAnimationIntervalButton = useRef()
     const startNodeInput = useRef()
     const errorMessage = useRef()
 
@@ -127,7 +127,7 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
                 <input placeholder={DEFAULT_ANIMATION_DURATION_FACTOR} className={styles.short_number_input} type="number" ref={animationIntervalInput} />
                 times
             </div>
-            <Button className={styles.modal_button} onClick={submitSpeedfactor}>
+            <Button className={styles.modal_button} onClick={submitAnimationInterval} ref={submitAnimationIntervalButton}>
                 submit
             </Button>
             <div className={styles.modal_text_container}>
@@ -167,9 +167,12 @@ function SelectStartNodeModal({ flowControlInterface, graphInterface, setAnimati
         modalInterface.current.setVisible(false)
     }
 
-    function submitSpeedfactor() {
+    async function submitAnimationInterval() {
         if (animationIntervalInput.current.value.length > 0) {
             setAnimationInterval(parseFloat(animationIntervalInput.current.value))
+            submitAnimationIntervalButton.current.innerHTML = "submitted!"
+            await delay(1500)
+            submitAnimationIntervalButton.current.innerHTML = "submit"
         }
     }
 }
@@ -227,7 +230,7 @@ function GenerateGraphModal({ graphInterface, tableInterface, getInterface, ...p
             <div className={styles.error_message} ref={errorMessage} />
 
             <Button className={styles.modal_button} onClick={sumbmitGraphData}>
-                submit
+                generate
             </Button>
         </div>
         <Button className={styles.close_modal_button} onClick={() => modalInterface.current.setVisible(false)}>close</Button>
