@@ -6,12 +6,13 @@ import { avlClear, avlGetItem, avlInsert, avlRemove, getTree } from "../requests
 import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
 
 
+const ACCOUNT_ID = 15
+
 cytoscape.use(dagre);
 
 
 export default function AVLTree({ style, visualizationDuration, getInterface, ...props }) {
 
-    const identifier = 15
     const graphViewInterface = useRef()
     const thisInterface = useRef()
 
@@ -128,19 +129,19 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
             stepForward: graphViewInterface.current.stepForward,
             isPaused: () => graphViewInterface.current.getHandler().paused,
             insert: async (node) => {
-                let data = await avlInsert({ identifier: identifier, key: node })
+                let data = await avlInsert({ identifier: ACCOUNT_ID, key: node })
                 graphViewInterface.current.addActions(data)
             },
             remove: async (node) => {
-                let data = await avlRemove({ identifier: identifier, key: node })
+                let data = await avlRemove({ identifier: ACCOUNT_ID, key: node })
                 graphViewInterface.current.addActions(data)
             },
             find: async (node) => {
-                let data = await avlGetItem(identifier, node)
+                let data = await avlGetItem(ACCOUNT_ID, node)
                 graphViewInterface.current.addActions(data)
             },
             clear: async () => {
-                await avlClear(identifier)
+                await avlClear(ACCOUNT_ID)
                 graphViewInterface.current.reset()
                 graphViewInterface.current.addActions([{ type: "set", tree: [] }])
             },
@@ -152,20 +153,20 @@ export default function AVLTree({ style, visualizationDuration, getInterface, ..
 
                 newNodes.sort(() => Math.random() - 0.5)
                 for (let newNode of newNodes) {
-                    let data = await avlInsert({ identifier: identifier, key: newNode })
+                    let data = await avlInsert({ identifier: ACCOUNT_ID, key: newNode })
                     graphViewInterface.current.addActions(data)
                 }
 
                 newNodes.sort(() => Math.random() - 0.5)
                 for (let i = 0; i < numberRemoved; i++) {
-                    let data = await avlRemove({ identifier: identifier, key: newNodes[i] })
+                    let data = await avlRemove({ identifier: ACCOUNT_ID, key: newNodes[i] })
                     graphViewInterface.current.addActions(data)
                 }
             }
         }
         getInterface(thisInterface.current)
 
-        graphViewInterface.current.addActions([{ type: "set", tree: await getTree(identifier) }])
+        graphViewInterface.current.addActions([{ type: "set", tree: await getTree(ACCOUNT_ID) }])
 
         graphViewInterface.current.getCy().nodes().ungrabify()
 
