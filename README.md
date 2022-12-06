@@ -35,6 +35,7 @@ Run:
 
 Go to `algo-vis/` and run:
 
+- `npm install`
 - `npm start`
 
 The project is now started and the browser window should open. You're all set!
