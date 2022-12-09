@@ -27,7 +27,7 @@ def get_tree():
         abort(400, e)
 
 @app.route('/avl/<key>', methods=['GET'])
-def get_tree_itme(key):    
+def get_tree_item(key):    
 
     try:
         identifier = int(request.args.get("identifier"))
