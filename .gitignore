@@ -1,0 +1,27 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/algo-vis/node_modules
+/algo-vis/.pnp
+/algo-vis/.pnp.js
+
+# testing
+/algo-vis/coverage
+
+# production
+/algo-vis/build
+
+# misc
+/algo-vis/.DS_Store
+/algo-vis/.env.local
+/algo-vis/.env.development.local
+/algo-vis/.env.test.local
+/algo-vis/.env.production.local
+
+/algo-vis/npm-debug.log*
+/algo-vis/yarn-debug.log*
+/algo-vis/yarn-error.log*
+
+/env/
+**/__pycache__/
+
