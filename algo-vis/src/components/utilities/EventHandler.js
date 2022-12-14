@@ -1,40 +1,96 @@
-import Queue from "./Queue";
+// Aynchronously waits for events to come, and if they appear, calls the handler callback
+// Used to handle animations
+
+
+import HistoryQueue from "./HistoryQueue";
+
+const MAX_COUNT_OF_REMEMBERED_EVENTS = 100;
 
 export default class EventHandler {
-    #eventQueue = new Queue();
-    #currentResolve = null;
+    #eventQueue = new HistoryQueue(MAX_COUNT_OF_REMEMBERED_EVENTS);
+    #currentResolveCallback = null;
     #closed = false;
+    #paused = false
+    #reverseExecutionOrder = false
 
-    constructor(handleEvent) {
-        this.handleEvent = handleEvent
+    constructor(eventHandlerCallback) {
+        this.eventHandlerCallback = eventHandlerCallback
     }
 
     async start() {
         this.#closed = false
+
         while(!this.#closed) {
-            if(this.#eventQueue.length === 0) {
-                await this.#constructNewPromise()
+            await this.#waitForData()
+
+            if(this.#reverseExecutionOrder) {
+                if(this.#eventQueue.bufferedLength < 2) continue; 
+                
+                await this.eventHandlerCallback(this.#eventQueue.revert())
             } else {
-                await this.handleEvent(this.#eventQueue.dequeue())
+                if(this.#eventQueue.length === 0) continue; 
+                
+                await this.eventHandlerCallback(this.#eventQueue.dequeue())
             }
         }
     }
 
     get closed() { return this.#closed }
+    get paused() { return this.#paused }
+    get isReverse() { return this.#reverseExecutionOrder }
 
     addEvents(actions) {
         this.#eventQueue.enqueue(...actions)
-        this.#currentResolve?.()
+
+        if(!this.paused) {
+            this.#currentResolveCallback?.()
+        }
+    }
+
+    pause() {
+        this.#paused = true
+    }
+
+    back() {
+        this.pause()
+        this.#reverseExecutionOrder = true
+        this.#currentResolveCallback?.()
+    }
+
+    forward() {
+        this.pause()
+        this.#reverseExecutionOrder = false
+        this.#currentResolveCallback?.()
+    }
+
+    resume() {
+        this.#paused = false
+        this.#reverseExecutionOrder = false
+        this.#currentResolveCallback?.()
+    }
+
+    dropBufferedEvents() {
+        this.#paused = false
+        this.#reverseExecutionOrder = false
+        this.#eventQueue.clear()
     }
 
     stop() {
+        this.#eventQueue.clear()
         this.#closed = true
-        this.#currentResolve?.()
+        this.#currentResolveCallback?.()
     }
 
-    #constructNewPromise() {
+    #waitForData() {
         return new Promise((resolve) => {
-            this.#currentResolve = resolve;
+            this.#currentResolveCallback = resolve;
+            
+            if(!this.#paused) {
+                if( (!this.#reverseExecutionOrder && this.#eventQueue.length > 0) ||
+                    (this.#reverseExecutionOrder && this.#eventQueue.bufferedLength > 0)) {
+                    resolve()
+                }
+            }
         })
     }
 }

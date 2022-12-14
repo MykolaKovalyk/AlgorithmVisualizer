@@ -1,0 +1,17 @@
+
+
+.button {
+    color: ghostwhite;
+    font-size: medium;
+    background-color:black;
+    border-radius: 5px;
+    padding: 7px 14px;
+    border: 1px solid black;
+    transition: background-color 0.2s ease-in, color 0.2s ease-in, border 0.2s ease-in;
+}
+
+.button:hover {
+    background-color: transparent;
+    color: black;
+    border: 1px solid black;
+}

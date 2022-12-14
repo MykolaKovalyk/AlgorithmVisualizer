@@ -1,0 +1,96 @@
+
+
+.message_area {
+    margin: 20px auto;
+    font-size: larger;
+}
+
+.view {
+    margin: 20px auto;
+    border-radius: 10px;
+    height: 400px;
+    overflow: hidden;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+.data_input {
+    display: flex;
+    width: fit-content;
+    margin: 20px auto 0 auto;
+}
+
+
+.data_button {
+    width: 100px;
+    margin: 10px;
+}
+
+.clear_button {
+    display: block;
+    width: 150px;
+    margin: 10px auto;
+}
+
+
+
+.input_table {
+    width: fit-content;
+    padding: 10px;
+    margin: 10px auto;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+
+
+.short_number_input {
+    width: 40px;
+    height: 25px;
+    margin: 10px;
+}
+
+.modal {
+    position: relative;
+    margin: 100px auto;
+    padding: 30px;
+    width: 600px;
+    height: fit-content;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+.modal_container {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.number_input {
+    display: block;
+    width: fit-content;
+    margin: 10px auto;
+}
+
+.modal_text_container {
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.error_message {
+    color: red;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.modal_button {
+    display: block;
+    width: 150px;
+    margin: 10px auto;
+}
+
+.close_modal_button {
+    display: block;
+    width: 100px;
+    margin: 0 0 0 auto;
+}

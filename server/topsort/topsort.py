@@ -7,14 +7,14 @@ class ActionLogger:
     def add(self, action: Any):
         self._action_list.append(action)
 
-    def new_step(self, selected_node, traversal_path, traversed):
-        self.add({"action": "step",  "selected": selected_node, "path": list(traversal_path), "traversed": list(traversed)})
+    def new_step(self, selected_node, selected_edge, traversal_path, traversed):
+        self.add({"type": "step",  "selected": selected_node, "selected_edge": selected_edge, "path": list(traversal_path), "traversed": list(traversed)})
 
     def final_array(self, final_array):
-        self.add({"action": "final_array",  "array": final_array})
+        self.add({"type": "final_array",  "array": final_array})
     
-    def error(self, error_message):
-        self.add({"action": "error", "message": error_message})
+    def found_cycle(self, traverse_stack):
+        self.add({"type": "found_cycle", "traverse_stack": traverse_stack})
 
 
     def read_all(self) -> List[Any]:
@@ -39,22 +39,23 @@ def topsort(edges, start):
     
     traversed_nodes = []
 
-
     for node in nodes:
         if node not in traversed_nodes:
             visited = []
             traverse_stack = [node]
 
+            current_node = None
             while len(traverse_stack) > 0:
+                parent_node = current_node
                 current_node = traverse_stack[-1]
-                logger.new_step(current_node, traverse_stack, traversed_nodes)
-
+                logger.new_step(current_node, [parent_node, current_node], traverse_stack, traversed_nodes)
 
                 found_unvisited = False
                 for edge in edges:
                     if edge[0] == current_node:
                         if edge[1] in traverse_stack:
-                            logger.error(f"Graph is not acyclic. Cycle {traverse_stack} was found")
+                            cycle = [element for index, element in enumerate(traverse_stack) if index  >= traverse_stack.index(edge[1])]
+                            logger.found_cycle(cycle)
                             return None, logger
                         if edge[1] not in traversed_nodes and edge[1] not in visited:
                             traverse_stack.append(edge[1])
@@ -66,12 +67,10 @@ def topsort(edges, start):
                     traversed_nodes.insert(0, current_node)
                 
                 visited.append(current_node)
-    
-    logger.new_step(None, [], traversed_nodes)
+
+    logger.new_step(None, [], [], traversed_nodes)
     logger.final_array(traversed_nodes)
-
     return traversed_nodes, logger
-
 
 if __name__ ==  "__main__":
     print(topsort([[1, 2],  [1, 3], [1, 4], [3, 2], [2, 4], [3, 6], [6, 4]], 3))

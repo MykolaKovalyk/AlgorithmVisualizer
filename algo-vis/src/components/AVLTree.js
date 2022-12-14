@@ -1,43 +1,23 @@
-import { useEffect, useState, useRef } from "react";
-import useStateRef from "react-usestateref"
+import { useRef } from "react";
 import cytoscape from "cytoscape";
-import EventHandler from "./utilities/EventHandler";
-import CytoscapeComponent from "react-cytoscapejs";
 import dagre from 'cytoscape-dagre';
+import GraphView from "./GraphView";
+import { avlClear, avlGetItem, avlInsert, avlRemove, getTree } from "../requests";
+import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
+
+
+const ACCOUNT_ID = 15
 
 cytoscape.use(dagre);
 
 
-const visualizationSpeed = 0.25
+export default function AVLTree({ style, visualizationDuration, getInterface, ...props }) {
+
+    const graphViewInterface = useRef()
+    const thisInterface = useRef()
 
 
-export default function AVLTree(props) {
-
-    const [graph, setGraph] = useState()
-
-
-    const [cy, setCy, cyRef] = useStateRef()
-    const eventHandler = useRef()
-
-    useEffect(() => {
-        eventHandler.current = new EventHandler(async (action) => 
-            await actionHandler({
-                getCy: () => cyRef.current, 
-                setGraph, 
-                action
-            }))
-
-        eventHandler.current.start()
-        
-        props.getAddActions?.(
-            eventHandler.current.addEvents.bind(eventHandler.current))
-
-        return () => eventHandler.current.stop()
-    }, [])
-
-
-
-    let style = {
+    let viewportStyle = style || {
         width: "100%",
         height: "100%"
     }
@@ -45,7 +25,7 @@ export default function AVLTree(props) {
     let layout = {
         name: "dagre",
         animate: true,
-        animationDuration: visualizationSpeed * 750
+        animationDuration: visualizationDuration * 750
     }
 
     let stylesheet = [
@@ -53,150 +33,187 @@ export default function AVLTree(props) {
             selector: 'node',
             style: {
                 content: 'data(id)',
+                "background-color": "white",
+                "border-color": "black",
+                'border-width': 2,
+                "text-valign": "center",
+                "text-halign": "center"
             }
         },
         {
             selector: 'edge',
             style: {
+                'line-color': "lightblue",
             }
         },
         {
-            selector: '.red',
+            selector: '.new_node',
             style: {
-                'background-color': "red",
+                'background-color': "#2AAA8A",
             }
         },
         {
-            selector: '.green',
+            selector: '.removal',
             style: {
-                'background-color': "green",
+                'color': 'white',
+                'background-color': "#880808",
             }
         },
         {
-            selector: '.orange',
+            selector: '.search',
             style: {
-                'background-color': "orange",
+                'border-color': "black",
+                'background-color': "black",
+                'color': "white",
+                'border-width': 3,
             }
         },
         {
-            selector: '.yellow',
+            selector: '.found',
             style: {
-                'background-color': "yellow",
+                'background-color': "#AFE1AF",
+                'border-width': 2,
+            }
+        },
+        {
+            selector: '.rotation',
+            style: {
+                'border-color': "orange",
+                'border-width': 2,
+            }
+        },
+        {
+            selector: '.replacement',
+            style: {
+                'border-color': "orange",
+                'border-width': 3,
+            }
+        },
+        {
+            selector: '.fixup_traversal',
+            style: {
+                'border-color': "black",
+                'border-style': 'double',
+                'background-color': "black",
+                'color': "white",
+                'border-width': 4,
+            }
+        },
+        {
+            selector: '.fixup',
+            style: {
+                'border-color': "orange",
+                'border-style': 'double',
+                'background-color': "black",
+                'color': "white",
+                'border-width': 4,
             }
         }]
 
-    useEffect(() => {
-        let layoutObject = cy?.elements().makeLayout(layout);
-        layoutObject?.run()
-    }, [JSON.stringify(graph)])
 
-    cy?.nodes().ungrabify()
+    return <GraphView
+        stylesheet={stylesheet}
+        style={viewportStyle}
+        layout={layout}
+        getInterface={(interfceObj) => { graphViewInterface.current = interfceObj; initializeInterfaceObject() }}
+        visualizationDuration={visualizationDuration}
+        actionHandler={actionHandler}
+        actionHandlerArgs={{ onMessage: props.onMessage }} />;
 
-    return <CytoscapeComponent elements={graph} stylesheet={stylesheet} style={style} layout={layout} cy={setCy} />;
+
+    async function initializeInterfaceObject() {
+        thisInterface.current = {
+            pause: graphViewInterface.current.pauseHandler,
+            resume: graphViewInterface.current.resumeHandler,
+            stepBack: graphViewInterface.current.stepBack,
+            stepForward: graphViewInterface.current.stepForward,
+            isPaused: () => graphViewInterface.current.getHandler().paused,
+            insert: async (node) => {
+                let data = await avlInsert({ identifier: ACCOUNT_ID, key: node })
+                graphViewInterface.current.addActions(data)
+            },
+            remove: async (node) => {
+                let data = await avlRemove({ identifier: ACCOUNT_ID, key: node })
+                graphViewInterface.current.addActions(data)
+            },
+            find: async (node) => {
+                let data = await avlGetItem(ACCOUNT_ID, node)
+                graphViewInterface.current.addActions(data)
+            },
+            clear: async () => {
+                await avlClear(ACCOUNT_ID)
+                graphViewInterface.current.reset()
+                graphViewInterface.current.addActions([{ type: "set", tree: [] }])
+            },
+            test: async (numberAdded, numberRemoved) => {
+                let newNodes = []
+                for (let i = 0; i < numberAdded; i++) {
+                    newNodes.push(i)
+                }
+
+                newNodes.sort(() => Math.random() - 0.5)
+                for (let newNode of newNodes) {
+                    let data = await avlInsert({ identifier: ACCOUNT_ID, key: newNode })
+                    graphViewInterface.current.addActions(data)
+                }
+
+                newNodes.sort(() => Math.random() - 0.5)
+                for (let i = 0; i < numberRemoved; i++) {
+                    let data = await avlRemove({ identifier: ACCOUNT_ID, key: newNodes[i] })
+                    graphViewInterface.current.addActions(data)
+                }
+            }
+        }
+        getInterface(thisInterface.current)
+
+        graphViewInterface.current.addActions([{ type: "set", tree: await getTree(ACCOUNT_ID) }])
+
+        graphViewInterface.current.getCy().nodes().ungrabify()
+
+        return thisInterface.current
+    }
 }
 
 
-
-async function actionHandler({getCy, setGraph, action, ...props}) {
-    let actionType =  action.action
-
+async function actionHandler({ getCy, setGraph, getGraph, action, ...props }) {
+    let actionType = action.type
+    let visualizationDuration = props.getVisualizationDuration?.()
     let cy = getCy()
 
-    if(actionType === "select_node") {
-        assignClassToNodes([action.key], [action.color], cy)
-        await delay(visualizationSpeed*500)
+
+    if (action.old_tree) {
+        setGraph(action.old_tree)
+    }
+    action.old_tree = getGraph()
+
+    if (action.message) {
+        props.onMessage?.(action.message)
     }
 
-    if(actionType === "new_node") {
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
 
-        assignClassToNodes([action.key], ["green"], cy)
-        await delay(visualizationSpeed*500)
-    }
-
-    if(actionType === "remove_node") {
-        assignClassToNodes([action.key], ["red"], cy)
-        await delay(visualizationSpeed*500)
-        
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
-    }
-
-    if(actionType === "replace_node") {
-        assignClassToNodes([action.replacement, action.to_replace], ["orange"], cy)
-        await delay(visualizationSpeed*500)
-
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
-    }
-
-    if(actionType === "rotate_node") {
-        assignClassToNodes([action.key], ["orange"], cy)
-        await delay(visualizationSpeed*500)
-        
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-        await delay(visualizationSpeed*500)
-    }
-
-    if(actionType === "final_tree") {
+    if (actionType === "mark_nodes") {
         clearAllClasses(cy)
-        await delay(visualizationSpeed*500)
+        assignClassesToElements(action.nodes, action.reason, cy)
+        if (!action.handled && visualizationDuration)
+            await delay(visualizationDuration * 500)
     }
 
-    if(actionType === "set") {
-        setGraph(convertTreeToCytoscapeElements(action.tree, cy))
-    }
-}
-
-function convertTreeToCytoscapeElements(tree, cy) {
-
-    if (!tree) {
-        return {}
+    if (actionType === "refresh_state") {
+        setGraph(toCytoscapeElements(action.tree))
+        if (!action.handled && visualizationDuration)
+            await delay(visualizationDuration * 1000)
     }
 
-    
-
-    for (const node of cy.elements()) {
-        node.removeClass(node.classes())
+    if (actionType === "final_tree") {
+        clearAllClasses(cy)
+        if (action.handled && visualizationDuration)
+            await delay(visualizationDuration * 1000)
     }
 
-    let elements = []
-    
-    if(tree.nodes) {
-        for (const node of tree.nodes) {
-            elements.push({ data: { id: node, label: `${node}` }, classes: null})
-        }
+    if (actionType === "set") {
+        setGraph(toCytoscapeElements(action.tree))
     }
 
-    if (tree.edges) {
-        for (const edge of tree.edges) {
-            elements.push({ data: { source: edge[0], target: edge[1] } })
-        }
-    }
 
-    return elements;
-}
-
-function assignClassToNodes(nodesWithClass, classes, cy) {
-
-    let elements = []
-    for (const node of cy.elements()) {
-        node.removeClass(node.classes())
-        if(nodesWithClass.includes(parseInt(node.id()))) {
-            node.addClass(classes)
-        }
-        elements.push(node)
-    }
-}
-
-function clearAllClasses(cy) {
-    for (const node of cy.elements()) {
-        node.removeClass(node.classes())
-    }
-}
-
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    action.handled = true
 }
