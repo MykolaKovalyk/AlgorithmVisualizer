@@ -1,7 +1,7 @@
 import styles from "./Header.module.css"
 import NavLink from "./basic/NavLink"
 
-
+const LINKEDIN = "https://www.linkedin.com/in/mykola-kovalyk/"
 
 export default function Header(props) {
     return <div className={styles.header}>
@@ -12,8 +12,10 @@ export default function Header(props) {
                 }}>made by</h5>
             <h2 style={
                 {
-                    color: "#6F8FAF"
-                }}>
+                    color: "#6F8FAF",
+                    cursor: "pointer"
+                }}
+                onClick={() => window.open(LINKEDIN, "_blank")}>
                 Kovalyk Mykola
             </h2>
         </div>

@@ -13,6 +13,9 @@ export default function App() {
         <Route path="/" element={
           <Navigate to="/avl-tree" />
         } />
+        <Route path="/index.html" element={
+          <Navigate to="/avl-tree" />
+        } />
         <Route path="/topological-sort" element={
           <TopsortPage />
         } />

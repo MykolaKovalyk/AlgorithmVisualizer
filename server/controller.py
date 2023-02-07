@@ -6,48 +6,63 @@ from avl_tree.avl_tree import AVLTree;
 from topsort.topsort import topsort
 import sys
 import traceback
+import threading
+import time
 
+global_lock =  threading.Lock()
 structures = {}
 
 
 
 @app.route('/avl/', methods=['GET'])
-def get_tree():    
+def get_tree():
+    global_lock.acquire()
 
     try:
         identifier = int(request.args.get("identifier"))
-        
-        if not identifier in structures:
-            structures[identifier] = AVLTree()
 
-        avl_tree = structures[identifier]
+        create_tree_if_not_present(identifier)
+
+        saved_data = structures[identifier]
+        avl_tree = saved_data["tree"]
+        saved_data["last_modified"] = time.time()
         return avl_tree.to_json()
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
+    finally:
+        collect_dead_entries()
+        global_lock.release()
 
 @app.route('/avl/<key>', methods=['GET'])
-def get_tree_item(key):    
+def get_tree_item(key):
+    global_lock.acquire()
 
     try:
         identifier = int(request.args.get("identifier"))
         key = int(key)
 
-        if not identifier in structures:
-            structures[identifier] = AVLTree()
+        create_tree_if_not_present(identifier)
 
-        avl_tree = structures[identifier]
+        saved_data = structures[identifier]
+        avl_tree = saved_data["tree"]
         item = avl_tree[key]
-        return avl_tree.get_actions()
+        saved_data["last_modified"] = time.time()
+        return json.dumps(avl_tree.get_actions())
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
+    finally:
+        collect_dead_entries()
+        global_lock.release()
 
 @app.route('/avl/insert', methods=['POST'])
 def insert():
+    global_lock.acquire()
+
     try:
         data = request.json
-        indentification = data["identifier"]
+        identifier = data["identifier"]
         key = data["key"]
 
         if not isinstance(key, int):
@@ -55,20 +70,24 @@ def insert():
         if key < 0:
             raise Exception("Key value can't be less than 0")
 
+        create_tree_if_not_present(identifier)
 
-        if indentification not in structures:
-            structures[indentification] = AVLTree()
-
-        avl_tree = structures[indentification]
+        saved_data = structures[identifier]
+        avl_tree = saved_data["tree"]
         avl_tree.append(key, None)
-        
-        return avl_tree.get_actions()
+        saved_data["last_modified"] = time.time()
+        return json.dumps(avl_tree.get_actions())
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
+    finally:
+        collect_dead_entries()
+        global_lock.release()
 
 @app.route('/avl/clear', methods=['DELETE'])
 def clear_tree():
+    global_lock.acquire()
+
     try:
         data = request.json
         identifier = data["identifier"]
@@ -79,22 +98,32 @@ def clear_tree():
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
+    finally:
+        collect_dead_entries()
+        global_lock.release()
 
 
 @app.route('/avl/remove', methods=['DELETE'])
 def delete_item():
+    global_lock.acquire()
+
     try:
         data = request.json
         identifier = data["identifier"]
         key = data["key"]
 
-        tree: AVLTree = structures[identifier]
+        saved_data = structures[identifier]
+        tree = saved_data["tree"]
         tree.remove(key)
+        saved_data["last_modified"] = time.time()
 
-        return tree.get_actions() 
+        return json.dumps(tree.get_actions())
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
+    finally:
+        collect_dead_entries()
+        global_lock.release()
 
 @app.route('/topsort', methods=['POST'])
 def topological_sort():
@@ -103,10 +132,10 @@ def topological_sort():
 
         start = data["start"]
         edges = data["edges"]
-        
+
         output, logger = topsort(edges, start)
 
-        return logger.read_all()
+        return json.dumps(logger.read_all())
     except Exception as e:
         print(traceback.format_exc())
         abort(400, e)
@@ -119,7 +148,7 @@ def topological_sort():
 
 
 @app.route('/get-example', methods=['GET'])
-def get_example():    
+def get_example():
     password = request.args.get("password")
 
     return person
@@ -133,3 +162,22 @@ def post_example():
         abort(400, "Error message")
 
     return 'OK'
+
+
+
+
+def create_tree_if_not_present(identifier):
+    if not identifier in structures:
+        structures[identifier] = {
+                "tree": AVLTree(),
+                "last_modified": time.time()
+            }
+
+
+def collect_dead_entries():
+
+    for identifier in list(structures.keys()):
+        print(structures[identifier])
+        if time.time() - structures[identifier]["last_modified"] > 60:
+            del structures[identifier]
+

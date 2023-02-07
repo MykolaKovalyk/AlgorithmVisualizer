@@ -6,7 +6,7 @@ import { avlClear, avlGetItem, avlInsert, avlRemove, getTree } from "../requests
 import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
 
 
-const ACCOUNT_ID = 15
+const ACCOUNT_ID = Math.floor(Math.random() * 1_000_000)
 
 cytoscape.use(dagre);
 
