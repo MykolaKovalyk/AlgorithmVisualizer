@@ -22,7 +22,7 @@ Run command line in the project folder, and from there, run:
 
 - `python -m venv env `
 - `source env/bin/activate` (on POSIX)
-- `Scripts/activate.bat` (on Windows)
+- `call ./env/Scripts/activate.bat` (on Windows **Command Prompt**, <ins>not PowerShell</ins>)
 - `pip install -r requirements.txt`
 
 ### Run server
