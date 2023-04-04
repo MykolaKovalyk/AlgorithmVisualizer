@@ -1,7 +1,7 @@
 import { useRef } from "react"
 import cytoscape from "cytoscape"
 import fcose from "cytoscape-fcose"
-import { topsort } from "../requests"
+import { topsort } from "../algorithms/topsort"
 import GraphView from "./GraphView"
 import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
 
@@ -225,7 +225,7 @@ export default function Graph(props) {
     }
 
     async function topologicalSort(graph, startNode, controlObj) {
-        let data = await topsort(graph.edges, startNode)
+        let data = topsort(graph.edges, startNode)
         controlObj.current?.addActions(data)
     }
 }
