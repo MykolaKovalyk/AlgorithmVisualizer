@@ -1,4 +1,4 @@
-# Alorithm Visualizer 
+# Algorithm Visualizer 
 
 ![Tree demo](Demo.png)
 
