@@ -6,8 +6,8 @@ import GraphView from "./GraphView"
 import { toCytoscapeElements, assignClassesToElements, clearAllClasses, delay } from "./HelperFunctions"
 
 
-const MAX_COUNT_OF_NODES = 15
-const MAX_COUNT_OF_EDGES_PER_NODE = 14
+const MAX_COUNT_OF_NODES = 1000
+const MAX_COUNT_OF_EDGES_PER_NODE = 999
 
 cytoscape.use(fcose)
 
